@@ -47,12 +47,11 @@
 #include "G4OpticalSurface.hh"
 #include "G4LogicalSkinSurface.hh"
 
-#include "SiPMSD.hh"  // ����SiPM SDͷ�ļ�
+#include "SiPMSD.hh" 
 
 namespace B1
 {
 
-// ====== �޸İ棺PlaceSiPMArray �������ټ�����ת����ֻ������� ======
 void PlaceSiPMArray(G4LogicalVolume* parent, G4ThreeVector faceCenter, G4ThreeVector uDir,
                     G4ThreeVector vDir, int nRows, int nCols, G4LogicalVolume* logicSiPM,
                     G4RotationMatrix* rotation)
@@ -116,7 +115,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double lxe_size = telescope_size - 2 * gap;
   G4Material* lxe_mat = nist->FindOrBuildMaterial("G4_lXe");
 
-  // ���ù�ѧ����
   G4MaterialPropertiesTable* LXeMPT = new G4MaterialPropertiesTable();
   // Set wavelength-dependent refractive index for LXe
   const G4int NUM_RINDEX = 11;
@@ -145,37 +143,28 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   auto solidSiPM = new G4Box("SiPM", 0.5 * sipm_sizeXY, 0.5 * sipm_sizeXY, 0.5 * sipm_thickness);
   auto logicSiPM = new G4LogicalVolume(solidSiPM, sipm_mat, "SiPM");
 
-  // ����Ϊ����̽����
   auto sipmSD = new SiPMSD("SiPMSD");
   G4SDManager::GetSDMpointer()->AddNewDetector(sipmSD);
   logicSiPM->SetSensitiveDetector(sipmSD);
 
-// -------- �̶���ת������ --------
-  // +Z�� SiPM ���� -Z��Ĭ��SiPM����+Z����Ҫ��X��ת180�ȣ�
   G4RotationMatrix* rotPosZ = new G4RotationMatrix();
-  rotPosZ->rotateX(CLHEP::pi);  // 180����ת
+  rotPosZ->rotateX(CLHEP::pi);  
 
-  // -Z�� SiPM ���� +Z��Ĭ�ϣ�������ת��
   G4RotationMatrix* rotNegZ = nullptr;
 
-  // +X�� SiPM ���� -X����Y��ת +90�ȣ�
   G4RotationMatrix* rotPosX = new G4RotationMatrix();
-  rotPosX->rotateY(CLHEP::halfpi);  // +90��
+  rotPosX->rotateY(CLHEP::halfpi);  //
 
-  // -X�� SiPM ���� +X����Y��ת -90�ȣ�
   G4RotationMatrix* rotNegX = new G4RotationMatrix();
-  rotNegX->rotateY(-CLHEP::halfpi);  // -90��
+  rotNegX->rotateY(-CLHEP::halfpi);  // 
 
-  // +Y�� SiPM ���� -Y����X��ת+90�ȣ�����Z��ת180�ȣ�
   G4RotationMatrix* rotPosY = new G4RotationMatrix();
   rotPosY->rotateZ(CLHEP::pi);
   rotPosY->rotateX(CLHEP::halfpi);
 
-  // -Y�� SiPM ���� +Y����X��ת-90�ȣ�
   G4RotationMatrix* rotNegY = new G4RotationMatrix();
   rotNegY->rotateX(-CLHEP::halfpi);
 
-  // -------- ������ 6 ���� --------
   G4double half = 0.5 * lxe_size;
   G4double offset = 0.5 * sipm_thickness + 0.01 * mm;
 
@@ -192,7 +181,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   PlaceSiPMArray(logicLXe, {0, -half + offset, 0}, {1, 0, 0}, {0, 0, 1}, 18, 18, logicSiPM,
                  rotNegY);  // -Y
 
-  // -------- ���ӻ� --------
+  //
   auto shellVis = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, 0.2));
   shellVis->SetForceSolid(true);
   logicShell->SetVisAttributes(shellVis);
@@ -205,7 +194,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   sipmVis->SetForceSolid(true);
   logicSiPM->SetVisAttributes(sipmVis);
 
-  // �趨 scoring volume
   fScoringVolume = logicLXe;
 
   return physWorld;
