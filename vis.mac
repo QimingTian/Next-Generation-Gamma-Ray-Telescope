@@ -1,0 +1,66 @@
+# 基于你给的原始文件，唯一改动就是轨迹显示相关部分
+
+/vis/open
+/vis/viewer/set/autoRefresh false
+/vis/verbose errors
+
+/vis/drawVolume
+
+/vis/viewer/set/viewpointVector -1 0 0
+/vis/viewer/set/lightsVector -1 0 0
+
+/vis/viewer/set/style wireframe
+/vis/viewer/set/auxiliaryEdge true
+/vis/viewer/set/lineSegmentsPerCircle 100
+
+# 开启轨迹存储，绝对关键，没有它，轨迹不显示！
+/tracking/storeTrajectory 1
+
+# 创建轨迹显示器，按粒子ID显示轨迹
+/vis/modeling/trajectories/create/drawByParticleID
+
+# 只显示 opticalphoton，颜色设置青色
+/vis/modeling/trajectories/drawByParticleID-0/set opticalphoton cyan
+
+# 关闭其他粒子显示，设置为不显示（颜色透明）
+/vis/modeling/trajectories/drawByParticleID-0/set gamma    white transparent
+/vis/modeling/trajectories/drawByParticleID-0/set e-       white transparent
+/vis/modeling/trajectories/drawByParticleID-0/set e+       white transparent
+/vis/modeling/trajectories/drawByParticleID-0/set mu-      white transparent
+/vis/modeling/trajectories/drawByParticleID-0/set mu+      white transparent
+/vis/modeling/trajectories/drawByParticleID-0/set proton   white transparent
+/vis/modeling/trajectories/drawByParticleID-0/set pion+    white transparent
+/vis/modeling/trajectories/drawByParticleID-0/set pion-    white transparent
+
+# 让光子轨迹显示为平滑线并显示步点
+/vis/scene/add/trajectories smooth
+/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts true
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 2
+
+# 下面的是你之前的装饰保持不变
+
+/vis/scene/add/scale
+/vis/scene/add/axes
+/vis/scene/add/eventID
+/vis/scene/add/date
+/vis/scene/add/logo2D
+/vis/scene/add/logo
+
+/vis/set/colour red
+/vis/set/lineWidth 2
+/vis/scene/add/frame
+/vis/set/colour
+/vis/set/lineWidth
+
+/vis/scene/add/text 0 6 -4 cm 18 4 4 Shape1
+/vis/scene/add/text 6 7 10 cm 18 4 4 Shape2
+
+/vis/geometry/set/visibility World 0 false
+/vis/geometry/set/colour Envelope 0 0 0 1 .3
+
+/vis/viewer/set/style surface
+/vis/viewer/set/hiddenMarker true
+/vis/viewer/set/viewpointThetaPhi 120 150
+
+/vis/viewer/set/autoRefresh true
+/vis/verbose warnings
