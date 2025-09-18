@@ -36,7 +36,7 @@
 
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
-#include "PhysicsList.hh"  // ÐÂ¼ÓµÄ
+#include "PhysicsList.hh"  // ï¿½Â¼Óµï¿½
 
 using namespace B1;
 
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
   // Detector construction
   runManager->SetUserInitialization(new DetectorConstruction());
 
-  // Physics list Ìæ»»³É×Ô¶¨ÒåµÄ PhysicsList
+  // Physics list ï¿½æ»»ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ PhysicsList
   auto physicsList = new PhysicsList;
   physicsList->SetVerboseLevel(1);
   runManager->SetUserInitialization(physicsList);
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   }
   else {
     // interactive mode
-    UImanager->ApplyCommand("/control/execute init_vis.mac");
+    // UImanager->ApplyCommand("/control/execute init_vis.mac");  // Commented out for headless mode
     ui->SessionStart();
     delete ui;
   }
