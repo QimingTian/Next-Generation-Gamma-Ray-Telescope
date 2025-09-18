@@ -47,11 +47,12 @@
 #include "G4OpticalSurface.hh"
 #include "G4LogicalSkinSurface.hh"
 
-#include "SiPMSD.hh" 
+#include "SiPMSD.hh"  // ����SiPM SDͷ�ļ�
 
 namespace B1
 {
 
+// ====== �޸İ棺PlaceSiPMArray �������ټ�����ת����ֻ������� ======
 void PlaceSiPMArray(G4LogicalVolume* parent, G4ThreeVector faceCenter, G4ThreeVector uDir,
                     G4ThreeVector vDir, int nRows, int nCols, G4LogicalVolume* logicSiPM,
                     G4RotationMatrix* rotation)
@@ -101,8 +102,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   auto shellMPT = new G4MaterialPropertiesTable();
   G4double photonEnergy_shell[2] = {1.5 * eV, 6.2 * eV};
-  G4double reflectivity[2] = {0.005, 0.005}; // 0.5% reflectivity
-  shellMPT->AddProperty("REFLECTIVITY", photonEnergy_shell, reflectivity, 2);
+  G4double reflectivity_shell[2] = {0.005, 0.005}; // 0.5% reflectivity
+  shellMPT->AddProperty("REFLECTIVITY", photonEnergy_shell, reflectivity_shell, 2);
   shellSurface->SetMaterialPropertiesTable(shellMPT);
 
   new G4LogicalSkinSurface("ShellSkinSurface", logicShell, shellSurface);
@@ -115,16 +116,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double lxe_size = telescope_size - 2 * gap;
   G4Material* lxe_mat = nist->FindOrBuildMaterial("G4_lXe");
 
+  // ���ù�ѧ����
   G4MaterialPropertiesTable* LXeMPT = new G4MaterialPropertiesTable();
   // Set wavelength-dependent refractive index for LXe
   const G4int NUM_RINDEX = 11;
   G4double wavelength_nm[NUM_RINDEX] = {160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210};
-  G4double photonEnergy[NUM_RINDEX];
+  G4double photonEnergy_LXe[NUM_RINDEX];
   for (int i = 0; i < NUM_RINDEX; ++i) {
-    photonEnergy[i] = 1239.841984 / wavelength_nm[i]; // E[eV] = 1239.841984 / lambda[nm]
+    photonEnergy_LXe[i] = 1239.841984 / wavelength_nm[i]; // E[eV] = 1239.841984 / lambda[nm]
   }
   G4double refractiveIndex[NUM_RINDEX] = {2.10, 1.90, 1.82, 1.74, 1.70, 1.66, 1.62, 1.60, 1.58, 1.56, 1.54};
-  LXeMPT->AddProperty("RINDEX", photonEnergy, refractiveIndex, NUM_RINDEX);
+  LXeMPT->AddProperty("RINDEX", photonEnergy_LXe, refractiveIndex, NUM_RINDEX);
   LXeMPT->AddConstProperty("SCINTILLATIONYIELD", 25000. / MeV);
   LXeMPT->AddConstProperty("FASTTIMECONSTANT", 4.3 * ns, true);
   LXeMPT->AddConstProperty("SLOWTIMECONSTANT", 22 * ns, true);
@@ -143,28 +145,37 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   auto solidSiPM = new G4Box("SiPM", 0.5 * sipm_sizeXY, 0.5 * sipm_sizeXY, 0.5 * sipm_thickness);
   auto logicSiPM = new G4LogicalVolume(solidSiPM, sipm_mat, "SiPM");
 
+  // ����Ϊ����̽����
   auto sipmSD = new SiPMSD("SiPMSD");
   G4SDManager::GetSDMpointer()->AddNewDetector(sipmSD);
   logicSiPM->SetSensitiveDetector(sipmSD);
 
+// -------- �̶���ת������ --------
+  // +Z�� SiPM ���� -Z��Ĭ��SiPM����+Z����Ҫ��X��ת180�ȣ�
   G4RotationMatrix* rotPosZ = new G4RotationMatrix();
-  rotPosZ->rotateX(CLHEP::pi);  
+  rotPosZ->rotateX(CLHEP::pi);  // 180����ת
 
+  // -Z�� SiPM ���� +Z��Ĭ�ϣ�������ת��
   G4RotationMatrix* rotNegZ = nullptr;
 
+  // +X�� SiPM ���� -X����Y��ת +90�ȣ�
   G4RotationMatrix* rotPosX = new G4RotationMatrix();
-  rotPosX->rotateY(CLHEP::halfpi);  //
+  rotPosX->rotateY(CLHEP::halfpi);  // +90��
 
+  // -X�� SiPM ���� +X����Y��ת -90�ȣ�
   G4RotationMatrix* rotNegX = new G4RotationMatrix();
-  rotNegX->rotateY(-CLHEP::halfpi);  // 
+  rotNegX->rotateY(-CLHEP::halfpi);  // -90��
 
+  // +Y�� SiPM ���� -Y����X��ת+90�ȣ�����Z��ת180�ȣ�
   G4RotationMatrix* rotPosY = new G4RotationMatrix();
   rotPosY->rotateZ(CLHEP::pi);
   rotPosY->rotateX(CLHEP::halfpi);
 
+  // -Y�� SiPM ���� +Y����X��ת-90�ȣ�
   G4RotationMatrix* rotNegY = new G4RotationMatrix();
   rotNegY->rotateX(-CLHEP::halfpi);
 
+  // -------- ������ 6 ���� --------
   G4double half = 0.5 * lxe_size;
   G4double offset = 0.5 * sipm_thickness + 0.01 * mm;
 
@@ -181,7 +192,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   PlaceSiPMArray(logicLXe, {0, -half + offset, 0}, {1, 0, 0}, {0, 0, 1}, 18, 18, logicSiPM,
                  rotNegY);  // -Y
 
-  //
+  // -------- ���ӻ� --------
   auto shellVis = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, 0.2));
   shellVis->SetForceSolid(true);
   logicShell->SetVisAttributes(shellVis);
@@ -194,6 +205,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   sipmVis->SetForceSolid(true);
   logicSiPM->SetVisAttributes(sipmVis);
 
+  // �趨 scoring volume
   fScoringVolume = logicLXe;
 
   return physWorld;
