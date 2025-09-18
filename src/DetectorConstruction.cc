@@ -120,12 +120,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4MaterialPropertiesTable* LXeMPT = new G4MaterialPropertiesTable();
   // Set wavelength-dependent refractive index for LXe
   const G4int NUM_RINDEX = 11;
-  G4double wavelength_nm[NUM_RINDEX] = {160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210};
+  G4double wavelength_nm[NUM_RINDEX] = {210, 205, 200, 195, 190, 185, 180, 175, 170, 165, 160};
   G4double photonEnergy_LXe[NUM_RINDEX];
   for (int i = 0; i < NUM_RINDEX; ++i) {
     photonEnergy_LXe[i] = 1239.841984 / wavelength_nm[i]; // E[eV] = 1239.841984 / lambda[nm]
   }
-  G4double refractiveIndex[NUM_RINDEX] = {2.10, 1.90, 1.82, 1.74, 1.70, 1.66, 1.62, 1.60, 1.58, 1.56, 1.54};
+  G4double refractiveIndex[NUM_RINDEX] = {1.54, 1.56, 1.58, 1.60, 1.62, 1.66, 1.70, 1.74, 1.82, 1.90, 2.10};
   LXeMPT->AddProperty("RINDEX", photonEnergy_LXe, refractiveIndex, NUM_RINDEX);
   LXeMPT->AddConstProperty("SCINTILLATIONYIELD", 25000. / MeV);
   LXeMPT->AddConstProperty("FASTTIMECONSTANT", 4.3 * ns, true);
