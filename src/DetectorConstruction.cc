@@ -100,9 +100,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   shellSurface->SetFinish(polished);
 
   auto shellMPT = new G4MaterialPropertiesTable();
-  G4double photonEnergy[2] = {1.5 * eV, 6.2 * eV};
+  G4double photonEnergy_shell[2] = {1.5 * eV, 6.2 * eV};
   G4double reflectivity[2] = {0.005, 0.005}; // 0.5% reflectivity
-  shellMPT->AddProperty("REFLECTIVITY", photonEnergy, reflectivity, 2);
+  shellMPT->AddProperty("REFLECTIVITY", photonEnergy_shell, reflectivity, 2);
   shellSurface->SetMaterialPropertiesTable(shellMPT);
 
   new G4LogicalSkinSurface("ShellSkinSurface", logicShell, shellSurface);
