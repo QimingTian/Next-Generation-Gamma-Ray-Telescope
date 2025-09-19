@@ -53,15 +53,7 @@ EventAction::EventAction(RunAction* runAction)
 void EventAction::BeginOfEventAction(const G4Event*)
 {
   fEdep = 0.;
-
-  // Only write header on first event
-  if (fIsFirstEvent) {
-    std::ofstream outFile("cherenkov_photons.csv", std::ios::trunc);
-    outFile << "EventID,Process,Count\n";
-    outFile.close();
-    fIsFirstEvent = false;
-    std::cout << "[EventAction] Header written." << std::endl;
-  }
+  fProcessCounts.clear();
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
@@ -79,19 +71,12 @@ void EventAction::EndOfEventAction(const G4Event* event)
   const auto& hits = sipmSD->GetHits();
 
   // Count number of hits for each process type
-  std::map<std::string, int> processCounts;
   for (const auto& hit : hits) {
-    processCounts[hit.processName]++;
+    fProcessCounts[hit.processName]++;
   }
 
-  std::ofstream outFile("cherenkov_photons.csv", std::ios::app);
-  // Write only the summary: EventID,Process,Count
-  for (const auto& entry : processCounts) {
-    outFile << event->GetEventID() << "," << entry.first << "," << entry.second << "\n";
-    std::cout << "[EventAction] Event " << event->GetEventID() << ": "
-              << entry.second << " hits from process " << entry.first << std::endl;
-  }
-  outFile.close();
+  // Store this event's summary in RunAction (thread-safe)
+  fRunAction->AddEventSummary(event->GetEventID(), fProcessCounts);
 }
 
 }  // namespace B1
