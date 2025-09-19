@@ -55,10 +55,10 @@ class EventAction : public G4UserEventAction
     RunAction* fRunAction = nullptr;
     G4double fEdep = 0.;
 
-    bool fIsFirstEvent = true;  // 你忘记加的标志变量
+    // Store process counts for this event
+    std::map<std::string, int> fProcessCounts;
 };
 
 }  // namespace B1
 
 #endif
-
