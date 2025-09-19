@@ -54,9 +54,6 @@ class EventAction : public G4UserEventAction
   private:
     RunAction* fRunAction = nullptr;
     G4double fEdep = 0.;
-
-    // Store process counts for this event
-    std::map<std::string, int> fProcessCounts;
 };
 
 }  // namespace B1
