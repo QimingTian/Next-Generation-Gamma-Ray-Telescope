@@ -53,7 +53,6 @@ EventAction::EventAction(RunAction* runAction)
 void EventAction::BeginOfEventAction(const G4Event*)
 {
   fEdep = 0.;
-  fProcessCounts.clear();
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
@@ -62,21 +61,16 @@ void EventAction::EndOfEventAction(const G4Event* event)
     G4cerr << "[EventAction] fRunAction is null!" << G4endl;
     return;
   }
+  fRunAction->AddEdep(fEdep);
+
   G4SDManager* sdManager = G4SDManager::GetSDMpointer();
   auto sipmSD = (SiPMSD*)sdManager->FindSensitiveDetector("SiPMSD");
   if (!sipmSD) {
     G4cerr << "[EventAction] Error: Can't find SiPMSD!" << G4endl;
     return;
   }
-  const auto& hits = sipmSD->GetHits();
-
-  // Count number of hits for each process type
-  for (const auto& hit : hits) {
-    fProcessCounts[hit.processName]++;
-  }
-
-  // Store this event's summary in RunAction (thread-safe)
-  fRunAction->AddEventSummary(event->GetEventID(), fProcessCounts);
+  // You can still access hits here if needed for future analysis:
+  // const auto& hits = sipmSD->GetHits();
 }
 
 }  // namespace B1
