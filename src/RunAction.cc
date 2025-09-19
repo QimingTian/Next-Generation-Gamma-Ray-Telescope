@@ -75,8 +75,12 @@ void RunAction::BeginOfRunAction(const G4Run*)
 {
   G4RunManager::GetRunManager()->SetRandomNumberStore(false);
   G4AccumulableManager::Instance()->Reset();
-  // No file writing here; master will write at end of run
-  G4cout << "[RunAction] Ready to collect event summaries." << G4endl;
+  if (IsMaster()) {
+    std::ofstream outFile("cherenkov_photons.csv", std::ios::trunc);
+    outFile << "EventID,Process,Count\n";
+    outFile.close();
+    G4cout << "[RunAction] Cleared cherenkov_photons.csv at run start." << G4endl;
+  }
 }
 
 void RunAction::AddEdep(G4double edep)
