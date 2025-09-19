@@ -45,13 +45,16 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <vector>
+#include <mutex>
 
 namespace B1
 {
 
 RunAction::RunAction() : G4UserRunAction(), fEdep(0.), fEdep2(0.)
 {
-  // 自定义单位
+  // 锟皆讹拷锟藉单位
   const G4double milligray = 1.e-3 * gray;
   const G4double microgray = 1.e-6 * gray;
   const G4double nanogray = 1.e-9 * gray;
@@ -62,7 +65,7 @@ RunAction::RunAction() : G4UserRunAction(), fEdep(0.), fEdep2(0.)
   new G4UnitDefinition("nanogray", "nanoGy", "Dose", nanogray);
   new G4UnitDefinition("picogray", "picoGy", "Dose", picogray);
 
-  // 注册accumulables
+  // 注锟斤拷accumulables
   G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
   accumulableManager->RegisterAccumulable(fEdep);
   accumulableManager->RegisterAccumulable(fEdep2);
@@ -72,13 +75,14 @@ void RunAction::BeginOfRunAction(const G4Run*)
 {
   G4RunManager::GetRunManager()->SetRandomNumberStore(false);
   G4AccumulableManager::Instance()->Reset();
+  // No file writing here; master will write at end of run
+  G4cout << "[RunAction] Ready to collect event summaries." << G4endl;
+}
 
-  // 清空输出文件（全新开始）
-  std::ofstream outFile("Cherenkov_photons.csv", std::ios::trunc);
-  outFile << "PosX_mm,PosY_mm,PosZ_mm,Time_ns\n";  // 写文件头
-  outFile.close();
-
-  G4cout << "[RunAction] Cleared Cherenkov_photons.csv at run start." << G4endl;
+void RunAction::AddEventSummary(int eventID, const std::map<std::string, int>& processCounts)
+{
+  std::lock_guard<std::mutex> lock(fSummaryMutex);
+  fEventSummaries.emplace_back(eventID, processCounts);
 }
 
 void RunAction::EndOfRunAction(const G4Run* run)
@@ -116,6 +120,18 @@ void RunAction::EndOfRunAction(const G4Run* run)
 
   if (IsMaster()) {
     G4cout << G4endl << "--------------------End of Global Run-----------------------";
+    // Write the CSV file from all collected event summaries
+    std::ofstream outFile("cherenkov_photons.csv", std::ios::trunc);
+    outFile << "EventID,Process,Count\n";
+    for (const auto& entry : fEventSummaries) {
+      int eventID = entry.first;
+      const auto& processCounts = entry.second;
+      for (const auto& proc : processCounts) {
+        outFile << eventID << "," << proc.first << "," << proc.second << "\n";
+      }
+    }
+    outFile.close();
+    G4cout << "[RunAction] Wrote cherenkov_photons.csv with all event summaries." << G4endl;
   }
   else {
     G4cout << G4endl << "--------------------End of Local Run------------------------";
