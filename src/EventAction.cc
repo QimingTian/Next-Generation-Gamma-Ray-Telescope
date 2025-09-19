@@ -58,16 +58,16 @@ void EventAction::BeginOfEventAction(const G4Event*)
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
-  fRunAction->AddEdep(fEdep);
-
+  if (!fRunAction) {
+    G4cerr << "[EventAction] fRunAction is null!" << G4endl;
+    return;
+  }
   G4SDManager* sdManager = G4SDManager::GetSDMpointer();
   auto sipmSD = (SiPMSD*)sdManager->FindSensitiveDetector("SiPMSD");
-
   if (!sipmSD) {
     G4cerr << "[EventAction] Error: Can't find SiPMSD!" << G4endl;
     return;
   }
-
   const auto& hits = sipmSD->GetHits();
 
   // Count number of hits for each process type
