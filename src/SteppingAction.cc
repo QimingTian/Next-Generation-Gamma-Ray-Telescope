@@ -52,57 +52,39 @@ SteppingAction::SteppingAction(EventAction* eventAction)
   : fEventAction(eventAction), fScoringVolume(nullptr)
 {}
 
-// 每步执行
+// 每锟斤拷执锟斤拷
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
-  // 延迟拿scoring volume，避免每步都查
+  // 锟接筹拷锟斤拷scoring volume锟斤拷锟斤拷锟斤拷每锟斤拷锟斤拷锟斤拷
   if (!fScoringVolume) {
     auto detConstruction = static_cast<const DetectorConstruction*>(
       G4RunManager::GetRunManager()->GetUserDetectorConstruction());
     fScoringVolume = detConstruction->GetScoringVolume();
   }
 
-  // 拿当前step的逻辑体
+  // 锟矫碉拷前step锟斤拷锟竭硷拷锟斤拷
   G4LogicalVolume* volume =
     step->GetPreStepPoint()->GetTouchableHandle()->GetVolume()->GetLogicalVolume();
 
-  // 只对SiPM逻辑体中的光子处理
+  // 只锟斤拷SiPM锟竭硷拷锟斤拷锟叫的癸拷锟接达拷锟斤拷
   if (volume->GetName() != "SiPM") return;
 
-  // 只管光子
+  // 只锟杰癸拷锟斤拷
   G4Track* track = step->GetTrack();
   if (track->GetDefinition() != G4OpticalPhoton::Definition()) return;
 
-  // 事件ID
+  // 锟铰硷拷ID
   G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
 
-  // 读取信息
+  // 锟斤拷取锟斤拷息
   G4StepPoint* postPoint = step->GetPostStepPoint();
   G4ThreeVector pos = postPoint->GetPosition();
   G4double time = postPoint->GetGlobalTime();
 
-  // ===== 写文件逻辑：先判断文件是否存在 =====
-  std::ifstream checkFile("cherenkov_photons.csv");
-  bool fileExists = checkFile.good();
-  checkFile.close();
+  // ===== Remove all file writing to cherenkov_photons.csv =====
+  // (No file output here)
 
-  std::ofstream outFile("cherenkov_photons.csv", std::ios::app);
-  if (!outFile.is_open()) {
-    G4cerr << "[SteppingAction] ERROR: Can't open cherenkov_photons.csv" << G4endl;
-    return;
-  }
-
-  // 如果文件不存在，写入表头
-  if (!fileExists) {
-    outFile << "EventID,PosX_mm,PosY_mm,PosZ_mm,Time_ns\n";
-  }
-
-  // 写入数据
-  outFile << eventID << "," << pos.x() / mm << "," << pos.y() / mm << "," << pos.z() / mm << ","
-          << time / ns << "\n";
-  outFile.close();
-
-  // 能量沉积统计
+  // 统
   G4double edepStep = step->GetTotalEnergyDeposit();
   fEventAction->AddEdep(edepStep);
 }
