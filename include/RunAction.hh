@@ -33,6 +33,9 @@
 #include "G4UserRunAction.hh"
 #include "G4Accumulable.hh"
 #include "globals.hh"
+#include <map>
+#include <vector>
+#include <mutex>
 
 class G4Run;
 
@@ -56,9 +59,16 @@ class RunAction : public G4UserRunAction
 
     void AddEdep (G4double edep);
 
+    // Add event summary (process counts) for a given event
+    void AddEventSummary(int eventID, const std::map<std::string, int>& processCounts);
+
   private:
     G4Accumulable<G4double> fEdep = 0.;
     G4Accumulable<G4double> fEdep2 = 0.;
+
+    // Store all event summaries: vector of (eventID, processCounts)
+    std::vector<std::pair<int, std::map<std::string, int>>> fEventSummaries;
+    std::mutex fSummaryMutex;
 };
 
 }
