@@ -58,13 +58,16 @@ class RunAction : public G4UserRunAction
     void   EndOfRunAction(const G4Run*) override;
 
     void AddEdep (G4double edep);
+    // Add event summary (process counts) for a given event (thread-safe)
+    void AddEventSummary(int eventID, const std::map<std::string, int>& processCounts);
 
   private:
     G4Accumulable<G4double> fEdep = 0.;
     G4Accumulable<G4double> fEdep2 = 0.;
+    std::vector<std::pair<int, std::map<std::string, int>>> fEventSummaries;
+    std::mutex fSummaryMutex;
 };
 
 }
 
 #endif
-
