@@ -47,7 +47,7 @@ namespace B1
 {
 
 EventAction::EventAction(RunAction* runAction)
-  : fRunAction(runAction), fEdep(0.), fIsFirstEvent(true)
+  : fRunAction(runAction), fEdep(0.)
 {}
 
 void EventAction::BeginOfEventAction(const G4Event*)
