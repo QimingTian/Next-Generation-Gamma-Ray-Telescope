@@ -57,7 +57,7 @@ void EventAction::BeginOfEventAction(const G4Event*)
   // Only write header on first event
   if (fIsFirstEvent) {
     std::ofstream outFile("cherenkov_photons.csv", std::ios::trunc);
-    outFile << "EventID,PosX_mm,PosY_mm,PosZ_mm,Time_ns,Process\n";
+    outFile << "EventID,Process,Count\n";
     outFile.close();
     fIsFirstEvent = false;
     std::cout << "[EventAction] Header written." << std::endl;
@@ -78,30 +78,19 @@ void EventAction::EndOfEventAction(const G4Event* event)
 
   const auto& hits = sipmSD->GetHits();
 
-  std::ofstream outFile("cherenkov_photons.csv", std::ios::app);
-
-  // Write all hits with process name
-  for (const auto& hit : hits) {
-    auto pos = hit.position;
-    auto time = hit.time;
-    outFile << event->GetEventID() << ","
-            << pos.x() / mm << "," << pos.y() / mm << "," << pos.z() / mm << ","
-            << time / ns << "," << hit.processName << "\n";
-  }
-
   // Count number of hits for each process type
   std::map<std::string, int> processCounts;
   for (const auto& hit : hits) {
     processCounts[hit.processName]++;
   }
 
-  // Write summary to file and print to console
+  std::ofstream outFile("cherenkov_photons.csv", std::ios::app);
+  // Write only the summary: EventID,Process,Count
   for (const auto& entry : processCounts) {
-    outFile << event->GetEventID() << ",SUMMARY,,,,," << entry.first << "," << entry.second << "\n";
+    outFile << event->GetEventID() << "," << entry.first << "," << entry.second << "\n";
     std::cout << "[EventAction] Event " << event->GetEventID() << ": "
               << entry.second << " hits from process " << entry.first << std::endl;
   }
-
   outFile.close();
 }
 
