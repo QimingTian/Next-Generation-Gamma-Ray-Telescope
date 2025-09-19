@@ -53,6 +53,7 @@ EventAction::EventAction(RunAction* runAction)
 void EventAction::BeginOfEventAction(const G4Event*)
 {
   fEdep = 0.;
+  fProcessCounts.clear();
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
@@ -69,8 +70,11 @@ void EventAction::EndOfEventAction(const G4Event* event)
     G4cerr << "[EventAction] Error: Can't find SiPMSD!" << G4endl;
     return;
   }
-  // You can still access hits here if needed for future analysis:
-  // const auto& hits = sipmSD->GetHits();
+  const auto& hits = sipmSD->GetHits();
+  for (const auto& hit : hits) {
+    fProcessCounts[hit.processName]++;
+  }
+  fRunAction->AddEventSummary(event->GetEventID(), fProcessCounts);
 }
 
 }  // namespace B1
