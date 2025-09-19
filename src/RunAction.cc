@@ -75,14 +75,13 @@ void RunAction::BeginOfRunAction(const G4Run*)
 {
   G4RunManager::GetRunManager()->SetRandomNumberStore(false);
   G4AccumulableManager::Instance()->Reset();
-  // No file writing here; master will write at end of run
-  G4cout << "[RunAction] Ready to collect event summaries." << G4endl;
+  G4cout << "[RunAction] Ready to run." << G4endl;
 }
 
-void RunAction::AddEventSummary(int eventID, const std::map<std::string, int>& processCounts)
+void RunAction::AddEdep(G4double edep)
 {
-  std::lock_guard<std::mutex> lock(fSummaryMutex);
-  fEventSummaries.emplace_back(eventID, processCounts);
+  fEdep += edep;
+  fEdep2 += edep * edep;
 }
 
 void RunAction::EndOfRunAction(const G4Run* run)
@@ -120,18 +119,6 @@ void RunAction::EndOfRunAction(const G4Run* run)
 
   if (IsMaster()) {
     G4cout << G4endl << "--------------------End of Global Run-----------------------";
-    // Write the CSV file from all collected event summaries
-    std::ofstream outFile("cherenkov_photons.csv", std::ios::trunc);
-    outFile << "EventID,Process,Count\n";
-    for (const auto& entry : fEventSummaries) {
-      int eventID = entry.first;
-      const auto& processCounts = entry.second;
-      for (const auto& proc : processCounts) {
-        outFile << eventID << "," << proc.first << "," << proc.second << "\n";
-      }
-    }
-    outFile.close();
-    G4cout << "[RunAction] Wrote cherenkov_photons.csv with all event summaries." << G4endl;
   }
   else {
     G4cout << G4endl << "--------------------End of Local Run------------------------";
@@ -141,12 +128,6 @@ void RunAction::EndOfRunAction(const G4Run* run)
          << " Cumulated dose per run, in scoring volume : " << G4BestUnit(dose, "Dose")
          << " rms = " << G4BestUnit(rmsDose, "Dose") << G4endl
          << "------------------------------------------------------------" << G4endl;
-}
-
-void RunAction::AddEdep(G4double edep)
-{
-  fEdep += edep;
-  fEdep2 += edep * edep;
 }
 
 }  // namespace B1
