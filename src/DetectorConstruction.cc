@@ -44,8 +44,6 @@
 #include "G4SystemOfUnits.hh"
 #include "G4ThreeVector.hh"
 #include "G4VisAttributes.hh"
-#include "G4OpticalSurface.hh"
-#include "G4LogicalSkinSurface.hh"
 
 #include "SiPMSD.hh"  // ����SiPM SDͷ�ļ�
 
@@ -66,7 +64,7 @@ void PlaceSiPMArray(G4LogicalVolume* parent, G4ThreeVector faceCenter, G4ThreeVe
       G4double offsetV = (j - (nCols - 1) / 2.0) * spacing;
       G4ThreeVector pos = faceCenter + offsetU * uDir + offsetV * vDir;
 
-      new G4PVPlacement(rotation, pos, logicSiPM, "SiPM", parent, false, idx++, true);
+      new G4PVPlacement(rotation, pos, logicSiPM, "SiPM", parent, false, idx++, false);
     }
   }
 }
@@ -74,11 +72,12 @@ void PlaceSiPMArray(G4LogicalVolume* parent, G4ThreeVector faceCenter, G4ThreeVe
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
   G4NistManager* nist = G4NistManager::Instance();
-  G4bool checkOverlaps = true;
+  G4bool checkOverlaps = false;  // Disable overlap checking for faster startup
 
-  // -------- World --------
+  // -------- World (Space/Vacuum Environment) --------
   G4double world_size = 1.2 * m;
-  G4Material* world_mat = nist->FindOrBuildMaterial("G4_AIR");
+  // Use vacuum instead of air to simulate space environment
+  G4Material* world_mat = nist->FindOrBuildMaterial("G4_Galactic");
 
   auto solidWorld = new G4Box("World", 0.5 * world_size, 0.5 * world_size, 0.5 * world_size);
   auto logicWorld = new G4LogicalVolume(solidWorld, world_mat, "World");
@@ -87,46 +86,98 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
                                      0, checkOverlaps);
 
   // -------- Shell --------
-  G4double telescope_size = 1.0 * m;
+  G4double telescope_size = 1.02 * m;
   G4Material* shell_mat = nist->FindOrBuildMaterial("G4_Al");
+
+  // Set up aluminum shell optical properties
+  G4MaterialPropertiesTable* AlMPT = new G4MaterialPropertiesTable();
+  // Use same energy points as LXe for consistency
+  const G4int AlNUM = 13;
+  G4double alPhotonEnergy[AlNUM] = {
+    1240.0/600.0 * eV,  // 600 nm -> 2.07 eV
+    1240.0/400.0 * eV,  // 400 nm -> 3.10 eV
+    1240.0/210.0 * eV,  // 210 nm -> 5.90 eV
+    1240.0/205.0 * eV,  // 205 nm -> 6.05 eV
+    1240.0/200.0 * eV,  // 200 nm -> 6.20 eV
+    1240.0/195.0 * eV,  // 195 nm -> 6.36 eV
+    1240.0/190.0 * eV,  // 190 nm -> 6.53 eV
+    1240.0/185.0 * eV,  // 185 nm -> 6.70 eV
+    1240.0/180.0 * eV,  // 180 nm -> 6.89 eV
+    1240.0/175.0 * eV,  // 175 nm -> 7.09 eV
+    1240.0/170.0 * eV,  // 170 nm -> 7.29 eV
+    1240.0/165.0 * eV,  // 165 nm -> 7.52 eV
+    1240.0/160.0 * eV   // 160 nm -> 7.75 eV
+  };
+  // 5% reflectivity for all wavelengths
+  G4double alReflectivity[AlNUM] = {0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05};
+  AlMPT->AddProperty("REFLECTIVITY", alPhotonEnergy, alReflectivity, AlNUM);
+  shell_mat->SetMaterialPropertiesTable(AlMPT);
 
   auto solidShell =
     new G4Box("TelescopeShell", 0.5 * telescope_size, 0.5 * telescope_size, 0.5 * telescope_size);
   auto logicShell = new G4LogicalVolume(solidShell, shell_mat, "TelescopeShell");
-
-  // ---- Add optical surface for inner shell reflectivity ----
-  auto shellSurface = new G4OpticalSurface("ShellSurface");
-  shellSurface->SetType(dielectric_metal);
-  shellSurface->SetModel(unified);
-  shellSurface->SetFinish(polished);
-
-  auto shellMPT = new G4MaterialPropertiesTable();
-  G4double photonEnergy_shell[2] = {1.5 * eV, 6.2 * eV};
-  G4double reflectivity_shell[2] = {0.005, 0.005}; // 0.5% reflectivity
-  shellMPT->AddProperty("REFLECTIVITY", photonEnergy_shell, reflectivity_shell, 2);
-  shellSurface->SetMaterialPropertiesTable(shellMPT);
-
-  new G4LogicalSkinSurface("ShellSkinSurface", logicShell, shellSurface);
 
   new G4PVPlacement(nullptr, G4ThreeVector(), logicShell, "TelescopeShell", logicWorld, false, 0,
                     checkOverlaps);
 
   // -------- Liquid Xenon --------
   G4double gap = 1.0 * cm;
-  G4double lxe_size = telescope_size - 2 * gap;
+  G4double lxe_size = 1.0 * m;  // Fixed at 100cm
   G4Material* lxe_mat = nist->FindOrBuildMaterial("G4_lXe");
 
   // ���ù�ѧ����
   G4MaterialPropertiesTable* LXeMPT = new G4MaterialPropertiesTable();
-  // Set wavelength-dependent refractive index for LXe
-  const G4int NUM_RINDEX = 11;
-  G4double wavelength_nm[NUM_RINDEX] = {210, 205, 200, 195, 190, 185, 180, 175, 170, 165, 160};
-  G4double photonEnergy_LXe[NUM_RINDEX];
-  for (int i = 0; i < NUM_RINDEX; ++i) {
-    photonEnergy_LXe[i] = 1239.841984 / wavelength_nm[i]; // E[eV] = 1239.841984 / lambda[nm]
-  }
-  G4double refractiveIndex[NUM_RINDEX] = {1.54, 1.56, 1.58, 1.60, 1.62, 1.66, 1.70, 1.74, 1.82, 1.90, 2.10};
-  LXeMPT->AddProperty("RINDEX", photonEnergy_LXe, refractiveIndex, NUM_RINDEX);
+  const G4int NUM = 10;
+  // Wavelength-dependent refractive index and absorption length data
+  // Wavelengths: 160, 170, 175, 178, 200, 250, 300, 400, 500, 600 nm
+  // Convert wavelengths to photon energies: E = hc/λ (where hc = 1240 eV·nm)
+  // Energies must be in increasing order
+  G4double photonEnergy[NUM] = {
+    1240.0/600.0 * eV,  // 600 nm -> 2.07 eV
+    1240.0/500.0 * eV,  // 500 nm -> 2.48 eV
+    1240.0/400.0 * eV,  // 400 nm -> 3.10 eV
+    1240.0/300.0 * eV,  // 300 nm -> 4.13 eV
+    1240.0/250.0 * eV,  // 250 nm -> 4.96 eV
+    1240.0/200.0 * eV,  // 200 nm -> 6.20 eV
+    1240.0/178.0 * eV,  // 178 nm -> 6.97 eV
+    1240.0/175.0 * eV,  // 175 nm -> 7.09 eV
+    1240.0/170.0 * eV,  // 170 nm -> 7.29 eV
+    1240.0/160.0 * eV   // 160 nm -> 7.75 eV
+  };
+  G4double refractiveIndex[NUM] = {1.4, 1.4, 1.4, 1.4, 1.4, 1.58, 1.60, 1.70, 1.74, 2.10};
+  // Absorption length: wavelength-dependent values (meters) - your exact data
+  G4double absorptionLength[NUM] = {
+    100.0 * m,  // 600 nm -> 100 m
+    100.0 * m,  // 500 nm -> 100 m
+    100.0 * m,  // 400 nm -> 100 m
+    80.0 * m,   // 300 nm -> 80 m
+    70.0 * m,   // 250 nm -> 70 m
+    60.0 * m,   // 200 nm -> 60 m
+    50.0 * m,   // 178 nm -> 50 m
+    50.0 * m,   // 175 nm -> 50 m
+    20.0 * m,   // 170 nm -> 20 m
+    1.0 * m     // 160 nm -> 1 m
+  };
+  
+  // Rayleigh scattering length: wavelength-dependent values (meters) - based on your exact data
+  // Data points: 150nm->0cm, 200nm->150cm, 250nm->570cm, 300nm->1400cm, 350nm->2800cm, 400nm->5000cm, 450nm->9000cm
+  // Interpolated for the energy points used
+  G4double rayleighLength[NUM] = {
+    280.0 * m,  // 600 nm -> extrapolated (very long)
+    135.0 * m,   // 500 nm -> extrapolated  
+    50.0 * m,   // 400 nm -> 5000 cm = 50 m
+    14.0 * m,   // 300 nm -> 1400 cm = 14 m
+    5.7 * m,    // 250 nm -> 570 cm = 5.7 m
+    1.5 * m,    // 200 nm -> 150 cm = 1.5 m
+    0.8 * m,    // 178 nm -> interpolated between 200nm(150cm) and 250nm(570cm)
+    0.6 * m,    // 175 nm -> interpolated between 200nm(150cm) and 250nm(570cm)
+    0.3 * m,    // 170 nm -> interpolated between 150nm(0cm) and 200nm(150cm)
+    0.1 * m     // 160 nm -> interpolated between 150nm(0cm) and 200nm(150cm)
+  };
+  
+  LXeMPT->AddProperty("RINDEX", photonEnergy, refractiveIndex, NUM);
+  LXeMPT->AddProperty("ABSLENGTH", photonEnergy, absorptionLength, NUM);
+  LXeMPT->AddProperty("RAYLEIGH", photonEnergy, rayleighLength, NUM);
   LXeMPT->AddConstProperty("SCINTILLATIONYIELD", 25000. / MeV);
   LXeMPT->AddConstProperty("FASTTIMECONSTANT", 4.3 * ns, true);
   LXeMPT->AddConstProperty("SLOWTIMECONSTANT", 22 * ns, true);
