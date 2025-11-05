@@ -603,35 +603,6 @@ print(f"\nSaturation energy: {calc.E_sat_TeV:.2f} TeV")
 
 ---
 
-## Citation
-
-If you use this code in your research, please cite:
-
-```bibtex
-@software{lxe_cherenkov_telescope_2025,
-  author = {[Your Name]},
-  title = {Liquid Xenon Cherenkov Telescope Simulation Framework},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/[username]/[repository]}
-}
-```
-
-### Key References
-
-**Optical Properties**:
-- Malitson, I. H. (1963). *Refractive Index of CaF₂*. JOSA, 53(10), 1377-1378.
-- Li, H. H. (1976). *Refractive Index of CaF₂*. J. Phys. Chem. Ref. Data, 5, 329.
-- Dodge, M. J. (1984). *Refractive Index of MgF₂*. Appl. Opt., 23(12), 1980-1985.
-
-**Liquid Xenon Detectors**:
-- Aprile, E. et al. (2020). *Liquid xenon detectors for particle physics and astrophysics*. Rev. Mod. Phys., 92, 035003.
-
-**SiPM Technology**:
-- Hamamatsu Photonics. (2023). *MPPC (SiPM) Technical Handbook*.
-
----
-
 ## License
 
 This project is based on Geant4 Example B1 and follows the **Geant4 Software License**.
