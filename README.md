@@ -1,640 +1,512 @@
-# Liquid Xenon Cherenkov Telescope Simulation
+# Next-Generation Gamma-Ray Telescope
 
-[![Geant4](https://img.shields.io/badge/Geant4-11.x-blue.svg)](https://geant4.web.cern.ch/)
+[![Geant4](https://img.shields.io/badge/Geant4-11.3-blue.svg)](https://geant4.web.cern.ch/)
 [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Geant4-orange.svg)](http://cern.ch/geant4/license)
 
-A comprehensive Monte Carlo simulation framework for a space-based liquid xenon Cherenkov telescope designed for ultra-high-energy cosmic ray detection. This project includes three major components:
+A publication-grade Monte Carlo framework for a **space-based liquid xenon (LXe) Cherenkov telescope** with interior SiPM readout. The project couples a rebuilt **Geant4 11.3** detector simulation, **transfer-matrix optical filter design**, and a **Python analysis pipeline** that produces all figures in the companion paper.
 
-1. **Geant4 Main Simulation** - Full detector simulation with optical physics
-2. **Optical Filter Design** - Transfer matrix method optimization for Cherenkov/scintillation separation
-3. **SiPM Saturation Analysis** - Dynamic range and energy limit calculations
+**Repository:** [github.com/QimingTian/Next-Generation-Gamma-Ray-Telescope](https://github.com/QimingTian/Next-Generation-Gamma-Ray-Telescope)
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
+- [Scientific Overview](#scientific-overview)
+- [What This Repository Contains](#what-this-repository-contains)
+- [Key Performance Results](#key-performance-results)
 - [Project Structure](#project-structure)
-- [1. Geant4 Main Simulation](#1-geant4-main-simulation)
-  - [Detector Geometry](#detector-geometry)
-  - [Physics Processes](#physics-processes)
-  - [Building and Running](#building-and-running)
-  - [Output Data](#output-data)
-- [2. Optical Filter Design](#2-optical-filter-design)
-  - [Design Goals](#design-goals)
-  - [Implementation](#implementation)
-  - [Running the Simulations](#running-the-simulations)
-  - [Results](#results)
-- [3. SiPM Saturation Analysis](#3-sipm-saturation-analysis)
-  - [Physical Model](#physical-model)
-  - [Calculations](#calculations)
-  - [Configuration Comparison](#configuration-comparison)
-- [Requirements](#requirements)
+- [Detector and Physics Model](#detector-and-physics-model)
+- [Optical Filter Design](#optical-filter-design)
 - [Installation](#installation)
-- [Usage Examples](#usage-examples)
-- [Results and Outputs](#results-and-outputs)
-- [Citation](#citation)
+- [Building the Simulation](#building-the-simulation)
+- [Running Simulations](#running-simulations)
+- [Environment Variables](#environment-variables)
+- [Simulation Output](#simulation-output)
+- [Analysis Pipeline](#analysis-pipeline)
+- [Campaign Scripts](#campaign-scripts)
+- [Long-Running Jobs](#long-running-jobs)
+- [Paper and Figures](#paper-and-figures)
+- [Reproducibility](#reproducibility)
+- [Requirements](#requirements)
 - [License](#license)
 
 ---
 
-## Overview
+## Scientific Overview
 
-This simulation framework models a **1×1×1 m³ liquid xenon (LXe) detector** surrounded by **1,944 Silicon Photomultipliers (SiPMs)** arranged in an 18×18 grid on each of the six cube faces. The detector is designed to distinguish between:
+This instrument concept targets **indirect dark-matter searches** and high-energy astrophysics in the **50 GeV–1 TeV** band, where existing space missions (e.g. *Fermi*-LAT) lose sensitivity and ground-based IACTs have limited duty cycle and field of view.
 
-- **Cherenkov light** (190-600 nm) - Directional signal from charged particles
-- **Scintillation light** (175 nm) - Isotropic background from LXe excitation
+The simulated detector is a **1 m³ cubic LXe volume** instrumented with **1,944 SiPMs** (18×18 per face) mounted on the interior surfaces. Electromagnetic showers from gamma rays produce:
 
-**Key Innovation**: Optical filters (CaF₂ + MgF₂) transmit Cherenkov light while blocking scintillation, enabling precise particle tracking and energy reconstruction in the TeV-PeV range.
+- **Cherenkov light** (190–600 nm) — directional, used for tracking and energy reconstruction
+- **Scintillation light** (~175 nm) — isotropic background from LXe excitation
 
-### Scientific Motivation
+A **CaF₂ + MgF₂ optical filter** on each SiPM face transmits Cherenkov photons while suppressing scintillation. Per-photon filter transmission is applied in the sensitive detector (`SiPMSD`), so filter ON/OFF comparisons are first-class simulation modes.
 
-- **Space-based cosmic ray detector** operating in vacuum environment
-- **Energy range**: 100 GeV - 100 TeV (SiPM saturation limit)
-- **Angular resolution**: ~1° (enabled by Cherenkov cone reconstruction)
-- **Background rejection**: >95% scintillation suppression
+The framework supports:
+
+| Capability | Description |
+|------------|-------------|
+| Energy calibration | Linear photon yield vs. primary energy |
+| Energy resolution | Poisson-limited σ_E/E at 100 and 215 GeV |
+| Shower profiling | Longitudinal dE/dz, L₉₀ containment depth |
+| Angular reconstruction | Two reconstruction routes from SiPM count maps |
+| SiPM saturation | Peak-factor–limited dynamic range |
+| Effective area | Plane-source Monte Carlo |
+| Background rejection | γ vs. proton face-anisotropy comparison |
+
+Full scientific motivation, detector rationale, and figure captions are in [`paper/Paper.tex`](paper/Paper.tex).
+
+---
+
+## What This Repository Contains
+
+The codebase was rebuilt in 2026 for reproducible, publication-grade results. Compared with the original prototype, the current version provides:
+
+1. **Correct Geant4 architecture** — sensitive detectors registered in `ConstructSDandField()`, serial batch mode with merged CSV output, GPS-driven macros (no hardcoded beam).
+2. **Structured ntuples** — per-photon, per-event, and per-SiPM summaries written via `G4AnalysisManager`.
+3. **Runtime configuration** — filter, photon output, output tags, and random seed controlled by environment variables.
+4. **Campaign automation** — shell scripts for overnight energy, direction, effective-area, and hadronic background runs.
+5. **End-to-end analysis** — Python scripts from raw CSV to figures in `figures/` and `paper/`.
+6. **Hadronic physics build** — optional `MainHad` binary with `FTFP_BERT` for proton background studies.
+
+See [`docs/data_provenance.md`](docs/data_provenance.md) for a detailed comparison of pre-rebuild vs. current simulation values.
+
+---
+
+## Key Performance Results
+
+Representative results from the June 2026 campaign (`G4SEED=123456789`, filter design in `analysis/output/filter_transmission.csv`):
+
+| Quantity | Value | Notes |
+|----------|-------|-------|
+| Photon yield (filter OFF) | 9,781 photons/GeV | Energy calibration slope |
+| Photon yield (filter ON) | 6,982 photons/GeV | Per-photon T(λ) in `SiPMSD` |
+| Mean filter transmission | ~0.71 | Simulation-integrated |
+| σ_E/E @ 215 GeV (filter ON) | ~0.50% | 40-event resolution macro |
+| σ_E/E @ 100 GeV (filter ON) | ~0.65% | 40-event resolution macro |
+| Peak factor | ~2.2× | Peak-to-mean SiPM occupancy |
+| Saturation energy E_sat | ~1.63 TeV | 18×18×6, 14,400-cell SiPMs |
+| L₉₀ shower depth | ~595 mm | Longitudinal profile |
+| Angular σ₆₈ (vertical, Route A) | ~0.13° | Direction scan campaign |
+| Effective area @ 200 GeV | ~0.88 m² | Plane-source MC |
+| γ/p face-anisotropy ratio | ~2.6× | Background rejection metric |
 
 ---
 
 ## Project Structure
 
 ```
-myproject/
-├── src/                          # Geant4 source files
-│   ├── DetectorConstruction.cc   # Geometry: LXe cube + SiPM arrays
-│   ├── PhysicsList.cc            # Optical physics (Cherenkov, scintillation, Rayleigh)
-│   ├── SiPMSD.cc                 # Sensitive detector for photon counting
-│   ├── PrimaryGeneratorAction.cc # Particle gun configuration
-│   ├── SteppingAction.cc         # Track Cherenkov photons step-by-step
-│   ├── EventAction.cc            # Event-level data collection
-│   └── RunAction.cc              # Run-level statistics
-├── include/                      # Header files
-├── exampleB1.cc                  # Main program
-├── CMakeLists.txt                # Build configuration
-├── exampleB1.in                  # Macro for batch mode (10 events)
-├── init_vis.mac                  # Visualization initialization
-├── vis.mac                       # Visualization settings
+GammaRayTelescope/
+├── Main.cc                     # Geant4 application entry point
+├── CMakeLists.txt              # Builds Main (+ MainHad with -DWITH_HADRONIC=ON)
+├── setup_env.sh                # Sources local Geant4 install and toolchain paths
 │
-├── Filter/                       # Optical filter design module
-│   ├── filter_design.py          # Main filter design (TMM implementation)
-│   ├── optimize_ar_coating.py   # AR coating optimization
-│   ├── optimize_caf2_thickness.py # Substrate thickness scan
-│   ├── filter_design.csv         # Transmittance data (160-600 nm)
-│   ├── filter_design.png/pdf     # Publication-quality plots
-│   └── caf2_thickness_scan.csv   # Parametric scan results
+├── include/                    # Detector and runtime headers
+│   ├── DetectorConstruction.hh
+│   ├── PhysicsList.hh
+│   ├── SiPMSD.hh              # Optical photon sensitive detector + filter
+│   ├── AnalysisManager.hh     # CSV ntuple booking
+│   ├── FilterTransmission.hh  # Wavelength-dependent T(λ) lookup
+│   ├── OpticalMaterials.hh    # LXe Sellmeier / absorption / Rayleigh
+│   └── RuntimeConfig.hh       # G4WRITE_PHOTONS, G4FILTER flags
 │
-├── Saturation/                   # SiPM saturation analysis module
-│   ├── calculate_sipm_saturation.py # Core saturation model
-│   ├── plot_saturation_vs_array.py  # Array size optimization
-│   ├── calculate_peak_factor.py     # Peak factor from simulation data
-│   ├── cherenkov_yield_lxe.py       # Photon yield calculations
-│   └── saturation_vs_array_size.png # Comparison plots
+├── src/                        # Geant4 implementation (.cc)
 │
-└── build/                        # Build directory (after compilation)
-    ├── exampleB1                 # Executable
-    ├── cherenkov_photons.csv     # Per-photon data (position, direction)
-    └── photon_count_summary.csv  # Per-SiPM photon counts
+├── macros/                     # GPS batch macros (copied into build dirs)
+│   ├── energy_scan.mac         # 50–1000 GeV calibration scan
+│   ├── energy_resolution_*.mac # Fixed-energy resolution samples
+│   ├── direction_scan.mac      # Angular reconstruction training set
+│   ├── peak_factor.mac         # High-statistics shower for density maps
+│   ├── plane_source.mac        # Effective-area plane source
+│   ├── proton_background.mac   # Hadronic background (MainHad)
+│   └── quick_test.mac          # Single-event smoke test
+│
+├── analysis/                   # Python post-processing
+│   ├── common.py               # CSV parsing, SiPM grid utilities
+│   ├── Filter-Design.py        # TMM filter spectrum → filter_transmission.csv
+│   ├── run_all.py              # Run full analysis chain
+│   ├── recon/                  # Angular reconstruction (Route A & B)
+│   └── *.py                    # Individual figure/metric scripts
+│
+├── scripts/                    # Campaign orchestration
+│   ├── run_campaign.sh         # Core energy + angle + peak campaigns
+│   ├── run_overnight.sh        # Full paper campaign (direction, A_eff, background)
+│   ├── run_energy_supplement.sh
+│   ├── finish_campaigns.sh
+│   ├── sync_campaign_data.sh
+│   ├── generate_direction_scan.py
+│   ├── generate_energy_campaign.py
+│   └── keep_awake.sh           # Prevent sleep during long runs
+│
+├── data/                       # Campaign CSV output (gitignored except meta JSON)
+├── figures/                    # Generated plots (gitignored)
+├── analysis/output/            # JSON summaries from analysis scripts
+├── paper/                      # LaTeX manuscript + figure PNGs
+├── docs/                       # Data provenance and methodology notes
+│
+├── build/                      # Standard EM build (gitignored)
+├── build-hadronic/             # Hadronic build with MainHad (gitignored)
+└── deps/                       # Local Geant4 source/build/install (gitignored)
 ```
 
 ---
 
-## 1. Geant4 Main Simulation
+## Detector and Physics Model
 
-### Detector Geometry
+### Geometry
 
-**World Volume**: 1.2×1.2×1.2 m³ vacuum (`G4_Galactic`) simulating space environment
+| Component | Specification |
+|-----------|---------------|
+| World | 1.2 m cube, vacuum (`G4_Galactic`) |
+| Aluminum shell | 1.02 m cube, structural support |
+| LXe active volume | 1.0 m cube, ρ = 2.953 g/cm³ at 165 K |
+| SiPM array | 18×18 per face × 6 faces = **1,944 channels** |
+| SiPM pixel | 1.0 × 1.0 cm², 1 mm thick |
+| SiPM pitch | 5 cm center-to-center (~14.6% fill factor per face) |
 
-**Components**:
-1. **Aluminum shell** (1.02 m): 5% reflectivity, structural support
-2. **Liquid xenon volume** (1.0 m cube):
-   - Density: 2.953 g/cm³ at 165 K
-   - Refractive index: 1.4-2.1 (wavelength-dependent, 160-600 nm)
-   - Rayleigh scattering length: 0.1-280 m
-   - Absorption length: 1-100 m
-3. **SiPM arrays** (18×18×6 = 1,944 sensors):
-   - Size: 1×1 cm² per SiPM
-   - Spacing: 5 cm center-to-center
-   - Thickness: 1 mm silicon
-   - Coverage: ~14.6% per face
+SiPM placement, optical surfaces, and material properties are implemented in `src/DetectorConstruction.cc` and `src/OpticalMaterials.cc`.
 
-### Physics Processes
+### Physics
 
-**Custom Physics List** (`PhysicsList.cc`):
-- **Electromagnetic physics**: `G4EmStandardPhysics` (ionization, Bremsstrahlung)
-- **Optical physics**:
-  - **Cherenkov radiation**: `G4Cerenkov` (β > 1/n threshold)
-  - **Scintillation**: 25,000 photons/MeV (fast: 4.3 ns, slow: 22 ns)
-  - **Rayleigh scattering**: Wavelength-dependent (λ⁴ law)
-  - **Boundary processes**: Reflection, refraction, absorption
-- **Decay physics**: For unstable particles
+- **Electromagnetic:** `G4EmStandardPhysics_option4`
+- **Optical:** official `G4OpticalPhysics` — Cherenkov, scintillation, Rayleigh scattering, boundary processes
+- **Hadronic (optional):** `FTFP_BERT` when built with `-DWITH_HADRONIC=ON` (`MainHad`)
+- **Primaries:** `G4GeneralParticleSource` via macro files
 
-### Building and Running
+### Executables
 
-#### Prerequisites
-
-- **Geant4 11.x** with UI/Vis drivers enabled
-- **CMake 3.16+**
-- **C++17 compiler**
-
-#### Build Instructions
-
-```bash
-cd /path/to/myproject
-mkdir build && cd build
-cmake ..
-make -j8
-```
-
-#### Running Modes
-
-**Interactive Mode** (with visualization):
-```bash
-./exampleB1
-```
-Inside the session:
-```
-/control/execute init_vis.mac
-/control/execute vis.mac
-/run/beamOn 10
-```
-
-**Batch Mode** (for production runs):
-```bash
-./exampleB1 exampleB1.in
-```
-
-The macro `exampleB1.in` contains:
-```
-/run/initialize
-/gun/particle proton
-/gun/energy 1 TeV
-/gun/position 0 0 -30 cm
-/gun/direction 0 0 1
-/run/beamOn 10
-```
-
-#### Key Control Commands
-
-| Command | Description |
-|---------|-------------|
-| `/gun/particle <name>` | Set particle type (e.g., proton, e-, gamma) |
-| `/gun/energy <value>` | Set beam energy (e.g., 1 TeV, 100 GeV) |
-| `/gun/position <x> <y> <z>` | Set starting position |
-| `/gun/direction <dx> <dy> <dz>` | Set beam direction (unit vector) |
-| `/run/beamOn <N>` | Run N events |
-
-### Output Data
-
-Two CSV files are generated in the `build/` directory:
-
-#### 1. `cherenkov_photons.csv`
-Per-photon tracking data (up to 500k photons per event):
-```csv
-EventID,PhotonID,CreationX_mm,CreationY_mm,CreationZ_mm,MomentumX,MomentumY,MomentumZ,Wavelength_nm
-0,0,-12.34,56.78,123.45,0.123,-0.456,0.879,428.3
-0,1,15.67,-23.89,98.12,-0.234,0.567,0.789,392.1
-...
-```
-
-**Columns**:
-- `EventID`: Event number (0, 1, 2, ...)
-- `PhotonID`: Photon index within event
-- `CreationX/Y/Z_mm`: 3D position where photon was created (mm)
-- `MomentumX/Y/Z`: Momentum direction (unit vector)
-- `Wavelength_nm`: Photon wavelength in nanometers
-
-#### 2. `photon_count_summary.csv`
-Per-SiPM hit counts:
-```csv
-EventID,SiPMID,PhotonCount
-0,0,234
-0,1,189
-0,2,312
-...
-```
-
-**Columns**:
-- `SiPMID`: SiPM copy number (0-1943)
-- `PhotonCount`: Number of photons detected by this SiPM
+| Binary | Build flag | Purpose |
+|--------|------------|---------|
+| `Main` | default (`WITH_HADRONIC=OFF`) | Gamma-ray and EM shower campaigns |
+| `MainHad` | `-DWITH_HADRONIC=ON` | Proton background with hadronic physics |
 
 ---
 
-## 2. Optical Filter Design
+## Optical Filter Design
 
-### Design Goals
+The filter stack (air → LXe) is:
 
-**Objective**: Separate Cherenkov signal from scintillation background
-
-**Requirements**:
-- ✅ **Block scintillation**: T(175 nm) < 5%
-- ✅ **Transmit Cherenkov**: T(190-600 nm) > 95%
-- ✅ **Steep transition**: Minimize T(175)/T(190) ratio
-- ✅ **Space-qualified**: CaF₂ resists radiation damage
-
-### Implementation
-
-**Design**: CaF₂ substrate + MgF₂ double-layer anti-reflection (AR) coating
-
-**Layer Structure** (air to LXe):
 ```
-Air (n=1.0)
-  ↓
-MgF₂ layer 1 (20 nm, n=1.38)
-  ↓
-MgF₂ layer 2 (20 nm, n=1.38)
-  ↓
-CaF₂ substrate (1.5 mm, n=1.425)
-  ↓
-Liquid Xenon (n=1.4-2.1)
+Air (n = 1.0)
+  → MgF₂ AR layer 1 (~20 nm)
+  → MgF₂ AR layer 2 (~20 nm)
+  → CaF₂ substrate (~0.2 mm)
+  → Liquid xenon
 ```
 
-**Method**: Transfer Matrix Method (TMM)
-- Full electromagnetic wave propagation through multilayer stack
-- Complex refractive indices: n - ik (accounts for absorption)
-- Hybrid model:
-  - **TMM** for thin AR coatings (<10 μm)
-  - **Beer-Lambert law** for thick substrate (1.5 mm)
+**Design tool:** transfer matrix method (TMM) in `analysis/Filter-Design.py`, with optional AR coating optimization in `analysis/AR-Coating-Optimization.py`.
 
-### Running the Simulations
+**Simulation integration:** `FilterTransmission` loads `analysis/output/filter_transmission.csv`. In `SiPMSD::ProcessHits`, each optical photon is accepted with probability T(λ); scintillation at 175 nm is strongly suppressed while Cherenkov light at 190–600 nm passes at >95%.
 
-#### 1. Main Filter Design
-
-Generates optimized filter transmission spectrum:
+Regenerate the filter table before campaigns:
 
 ```bash
-cd Filter/
-python3 filter_design.py
+source .venv/bin/activate
+python analysis/Filter-Design.py
 ```
 
-**Outputs**:
-- `filter_design.csv` - Transmittance vs wavelength (1 nm resolution)
-- `filter_design.png` - High-resolution plot (300 DPI)
-- `filter_design.pdf` - Vector graphics for publications
-
-#### 2. AR Coating Optimization
-
-Optimizes MgF₂ layer thicknesses using differential evolution:
-
-```bash
-python3 optimize_ar_coating.py
-```
-
-**Outputs**:
-- Optimal layer thicknesses (20 nm + 20 nm)
-- Ripple analysis (±0.44% in passband)
-- `ar_optimization_result.png/pdf`
-
-#### 3. Substrate Thickness Scan
-
-Parametric scan from 0.1 mm to 2.0 mm:
-
-```bash
-python3 optimize_caf2_thickness.py
-```
-
-**Outputs**:
-- `caf2_thickness_scan.csv` - Full scan results
-- `caf2_thickness_optimization.png/pdf` - 4-panel comparison
-- `caf2_spectrum_comparison.png/pdf` - Optimal vs current design
-
-**Figures of Merit**:
-- T(175 nm) - Scintillation blocking
-- T(190 nm) - Cherenkov transmission
-- Average T(190-600 nm) - Passband performance
-- Transition ratio T(175)/T(190) - Edge steepness
-
-### Results
-
-**Optimal Design** (1.5 mm CaF₂ + 20nm+20nm MgF₂):
-
-| Wavelength | Transmittance | Note |
-|------------|---------------|------|
-| 175 nm | 0.126% | Xe scintillation - **blocked** |
-| 190 nm | 95.74% | Design cutoff |
-| 200 nm | 96.82% | 70% better than sapphire! |
-| 250 nm | 97.12% | Near-UV |
-| 400 nm | 97.45% | Visible blue |
-| 600 nm | 97.38% | Visible red |
-
-**Average T(190-600 nm)**: 97.22%
-
-**Transition ratio**: 0.0013 (excellent edge steepness)
+Outputs: `analysis/output/filter_transmission.csv`, `filter_design.png`, `filter_design.pdf`.
 
 ---
 
-## 3. SiPM Saturation Analysis
+## Installation
 
-### Physical Model
+### 1. Geant4
 
-**Saturation Mechanism**: Each SiPM has a finite number of microcells (N_cell). When too many photons arrive simultaneously, cells saturate and response becomes non-linear.
-
-**Key Parameters**:
-- **N_cell**: Number of microcells per SiPM (14,400 - 440,000)
-- **PDE**: Photon detection efficiency (0.25 typical)
-- **η**: Linearity threshold occupancy (0.2 = 20%)
-
-**Maximum photoelectrons**: 
-```
-μ_max = -N_cell × ln(1 - η)
-```
-
-**Saturation condition**: Peak SiPM exceeds μ_max
-
-### Calculations
-
-The saturation energy depends on:
-1. **Total photon yield**: From Geant4 simulation (9,246 photons/GeV)
-2. **Array size**: Number of SiPMs (1,944 for 18×18×6)
-3. **Peak factor**: Ratio of peak to average SiPM signal (3.4× from data)
-
-**Formula**:
-```
-E_sat = (μ_max / PDE) / (photons_per_GeV × peak_factor / total_SiPMs)
-```
-
-### Running the Code
-
-#### Basic Saturation Calculator
+This project expects **Geant4 11.3.x** with datasets installed. A local install path is wired in `setup_env.sh`:
 
 ```bash
-cd Saturation/
-python3 calculate_sipm_saturation.py
+source setup_env.sh   # sets Geant4_DIR, CMAKE_PREFIX_PATH, G4SEED
 ```
 
-**Output**:
-```
-================================================================================
-SiPM饱和能量计算 - 18×18阵列
-================================================================================
-输入参数：
-  阵列配置：18×18×6 = 1,944 SiPMs
-  微单元数：N_cell = 14,400 cells/SiPM
-  光电探测效率：PDE = 0.25
-  线性阈值：η = 0.2
-  能量标定：9,246 photons/GeV
-  峰值因子：3.4× 平均
+If you build Geant4 from source, install to `deps/geant4-install/` or edit `setup_env.sh` to point at your installation.
 
-计算结果：
-  饱和能量：E_sat = 897 GeV = 0.90 TeV
-================================================================================
-```
-
-#### Array Size Comparison
-
-Compare different array configurations:
+**macOS (Homebrew alternative):**
 
 ```bash
-python3 plot_saturation_vs_array.py
+brew install geant4 cmake qt@5 expat
 ```
 
-**Outputs**:
-- `saturation_vs_array_size.png/pdf` - E_sat vs grid size (10×10 to 80×80)
-- Comparison of three microcell technologies
+### 2. Python environment
 
-### Configuration Comparison
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-| Configuration | Grid Size | Total SiPMs | N_cell | E_sat (TeV) |
-|---------------|-----------|-------------|--------|-------------|
-| **Current** | 18×18×6 | 1,944 | 14,400 | **0.90** |
-| Advanced | 18×18×6 | 1,944 | 100,000 | 6.23 |
-| Ultimate | 18×18×6 | 1,944 | 440,000 | 27.43 |
-| **Recommended** | **40×40×6** | **9,600** | **14,400** | **4.45** |
+Dependencies: NumPy, SciPy, Matplotlib, Pandas, scikit-learn.
 
-**Key Insight**: Increasing array size from 18×18 to 40×40 improves saturation energy by 5×, providing coverage up to ~5 TeV with current SiPM technology.
+---
+
+## Building the Simulation
+
+### Standard build (gamma / EM campaigns)
+
+```bash
+source setup_env.sh
+mkdir -p build && cd build
+cmake .. -DWITH_GEANT4_UIVIS=OFF
+cmake --build . -j$(sysctl -n hw.ncpu)    # macOS
+# cmake --build . -j$(nproc)              # Linux
+```
+
+### Hadronic build (proton background)
+
+```bash
+mkdir -p build-hadronic && cd build-hadronic
+cmake .. -DWITH_GEANT4_UIVIS=OFF -DWITH_HADRONIC=ON
+cmake --build . -j$(sysctl -n hw.ncpu)
+```
+
+Macros are copied into each build directory at configure time. After editing macros in `macros/`, re-run `cmake ..` or copy manually:
+
+```bash
+cp macros/*.mac build/macros/
+cp macros/*.mac build-hadronic/macros/
+```
+
+---
+
+## Running Simulations
+
+### Quick smoke test
+
+```bash
+source setup_env.sh
+cd build
+export G4OUTPUT_TAG=quick_test G4FILTER=on G4WRITE_PHOTONS=0
+./Main macros/quick_test.mac
+ls data/quick_test_run0_nt_*.csv
+```
+
+### Single campaign macro
+
+```bash
+source setup_env.sh
+cd build
+export G4SEED=123456789
+export G4OUTPUT_TAG=energy_scan_on
+export G4MACRO=energy_scan.mac
+export G4FILTER=on
+export G4WRITE_PHOTONS=0
+./Main macros/energy_scan.mac
+cp data/energy_scan_on_* ../data/
+```
+
+### Interactive mode (with visualization)
+
+Build with `-DWITH_GEANT4_UIVIS=ON`, then:
+
+```bash
+cd build
+./Main
+# In the Geant4 session:
+/control/execute macros/quick_test.mac
+```
+
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `G4SEED` | `123456789` | CLHEP random seed (set in `Main.cc`) |
+| `G4OUTPUT_TAG` | `default` | Prefix for output files (`{tag}_run{N}_nt_*.csv`) |
+| `G4MACRO` | — | Recorded in run metadata JSON |
+| `G4FILTER` | `on` | `on`/`off` — per-photon filter rejection in `SiPMSD` |
+| `G4FILTER_CSV` | `../analysis/output/filter_transmission.csv` | Filter transmission table |
+| `G4WRITE_PHOTONS` | `0` | `1` to write per-photon ntuple (slower, large files) |
+
+Filter OFF is used for scintillation-inclusive baseline runs; filter ON is the nominal instrument mode.
+
+---
+
+## Simulation Output
+
+Each run produces CSV ntuples under `build/data/` (copied to `data/` by campaign scripts):
+
+### `{tag}_run{N}_nt_events.csv`
+
+Per-event summary:
+
+| Column | Description |
+|--------|-------------|
+| `EventID` | Event index |
+| `E_primary_GeV` | Primary gamma energy |
+| `DirX`, `DirY`, `DirZ` | Primary direction |
+| `N_Cherenkov`, `N_Scint` | Photon counts by process |
+| `Edep_MeV` | Total energy deposit |
+| `ShowerLength_mm` | Longitudinal shower extent |
+| `L90_mm`, `L90_truncated` | 90% energy containment depth |
+
+### `{tag}_run{N}_nt_sipm_summary.csv`
+
+| Column | Description |
+|--------|-------------|
+| `EventID` | Event index |
+| `SiPMID` | SiPM copy number (0–1943) |
+| `PhotonCount` | Detected photons on that SiPM |
+
+### `{tag}_run{N}_nt_photons.csv` (optional, `G4WRITE_PHOTONS=1`)
+
+Per-photon hits: position, time, wavelength, creating process (Cherenkov / Scintillation).
+
+### `{tag}_run{N}_meta.json`
+
+Run provenance: macro name, filter flag, seed, timestamp, git commit (when available).
+
+---
+
+## Analysis Pipeline
+
+After simulation data is in `data/`, run the full analysis chain:
+
+```bash
+source .venv/bin/activate
+python analysis/run_all.py
+```
+
+Or run individual scripts:
+
+```bash
+python analysis/energy_calibration.py --data-dir data
+python analysis/energy_resolution.py --tag energy_resolution_215_on
+python analysis/energy_resolution_filter_compare.py --data-dir data
+python analysis/shower_length.py --data-dir data --tag energy_scan_on
+python analysis/saturation.py
+python analysis/density_maps.py --tag peak_factor
+python analysis/angular_resolution.py --tag direction_scan --train-route-b
+python analysis/effective_area.py --tag plane_source --data-dir data
+python analysis/background_rejection.py --data-dir data
+python analysis/filter_folding.py --tag spectrum_photons
+```
+
+**Outputs:**
+
+- Figures → `figures/*.png` (copied to `paper/` for the manuscript)
+- JSON summaries → `analysis/output/*.json`
+
+### Angular reconstruction
+
+Two routes in `analysis/recon/`:
+
+- **Route A** — geometric luminous-axis reconstruction from face-weighted centroids (accurate for near-vertical incidence)
+- **Route B** — machine-learning regression on SiPM count features (trained on `direction_scan` campaign)
+
+---
+
+## Campaign Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/run_campaign.sh` | Core campaigns: energy scan, resolution, angle scan, peak factor + basic analysis |
+| `scripts/run_overnight.sh` | Full paper campaign: direction scan, filter on/off resolution, calibration, peak factor, plane source, proton background, full analysis |
+| `scripts/run_energy_supplement.sh` | Re-run energy metrics after filter/SiPMSD fixes |
+| `scripts/finish_campaigns.sh` | Plane source + sync + final analysis pass |
+| `scripts/sync_campaign_data.sh` | Copy latest CSV from `build/` and `build-hadronic/data/` to `data/` |
+| `scripts/generate_direction_scan.py` | Generate inclined-beam direction-scan macro |
+| `scripts/generate_energy_campaign.py` | Generate energy-resolution macros with configurable event counts |
+
+**Recommended full reproduction:**
+
+```bash
+bash scripts/run_overnight.sh
+# or, after partial runs:
+bash scripts/run_energy_supplement.sh
+bash scripts/finish_campaigns.sh all
+```
+
+`run_overnight.sh` automatically wraps itself with `caffeinate` on macOS to reduce idle sleep during long runs.
+
+---
+
+## Long-Running Jobs
+
+For multi-hour Geant4 campaigns with the laptop lid closed:
+
+```bash
+# 1. Plug into AC power
+# 2. Start keep-awake (attaches caffeinate to running Main/MainHad PIDs)
+bash scripts/keep_awake.sh start
+
+# 3. Prevent lid-close sleep (run once in Terminal; requires password)
+sudo pmset -a disablesleep 1
+
+# Check status
+bash scripts/keep_awake.sh status
+
+# When finished, restore normal power management
+bash scripts/keep_awake.sh stop
+sudo pmset -a disablesleep 0
+```
+
+---
+
+## Paper and Figures
+
+The LaTeX manuscript lives in [`paper/Paper.tex`](paper/Paper.tex):
+
+> *A Liquid Xenon Cherenkov Gamma-Ray Telescope: Simulation Performance of a Cubic SiPM Instrument*
+
+Analysis scripts write PNG figures to `figures/`; campaign scripts copy them into `paper/` for inclusion in the manuscript. Regenerate figures after updating simulation data:
+
+```bash
+python analysis/run_all.py
+cp figures/*.png paper/
+```
+
+---
+
+## Reproducibility
+
+1. Set a fixed seed: `export G4SEED=123456789`
+2. Record Geant4 version (11.3.2) and git commit — stored in `*_meta.json`
+3. Regenerate filter table: `python analysis/Filter-Design.py`
+4. Run campaigns with the same macros and `G4FILTER` settings documented in `docs/data_provenance.md`
+
+To compare against published numbers, see the old-vs-new table in [`docs/data_provenance.md`](docs/data_provenance.md).
 
 ---
 
 ## Requirements
 
-### Core Dependencies
+### C++ / Geant4
 
-**C++ Simulation (Geant4)**:
-- Geant4 11.x (with `ui_all` and `vis_all` drivers)
-- CMake 3.16 or higher
-- C++17 compatible compiler (GCC 9+, Clang 10+)
-- (Optional) ROOT for advanced analysis
+| Component | Version |
+|-----------|---------|
+| Geant4 | 11.3.x (with EM and optical physics datasets) |
+| CMake | ≥ 3.16 |
+| C++ compiler | C++17 (GCC 9+, Clang 10+, Apple Clang) |
+| Qt5 | Required if building with `WITH_GEANT4_UIVIS=ON` |
 
-**Python Analysis**:
-- Python 3.8+
-- NumPy 1.20+
-- SciPy 1.7+
-- Matplotlib 3.4+
+### Python
 
-### Installation
-
-#### Installing Geant4
-
-**macOS** (via Homebrew):
-```bash
-brew install geant4
-```
-
-**Linux** (from source):
-```bash
-# Download from https://geant4.web.cern.ch/
-cd geant4-v11.x.x
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=/opt/geant4 \
-      -DGEANT4_INSTALL_DATA=ON \
-      -DGEANT4_USE_OPENGL_X11=ON \
-      -DGEANT4_USE_QT=ON \
-      ..
-make -j$(nproc)
-sudo make install
-```
-
-**Environment Setup**:
-```bash
-source /opt/geant4/bin/geant4.sh  # Linux
-# or
-source /opt/homebrew/bin/geant4.sh  # macOS Homebrew
-```
-
-#### Installing Python Dependencies
-
-```bash
-pip install numpy scipy matplotlib
-```
-
-Or using a virtual environment:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-**Create `requirements.txt`**:
-```txt
-numpy>=1.20.0
-scipy>=1.7.0
-matplotlib>=3.4.0
-```
-
----
-
-## Usage Examples
-
-### Example 1: Run 1 TeV Proton Shower
-
-```bash
-cd build/
-./exampleB1 << EOF
-/run/initialize
-/gun/particle proton
-/gun/energy 1 TeV
-/gun/position 0 0 -30 cm
-/gun/direction 0 0 1
-/run/beamOn 1
-exit
-EOF
-```
-
-**Analysis**:
-```python
-import pandas as pd
-import numpy as np
-
-# Load photon data
-df = pd.read_csv('cherenkov_photons.csv')
-print(f"Total Cherenkov photons: {len(df)}")
-print(f"Wavelength range: {df['Wavelength_nm'].min():.1f} - {df['Wavelength_nm'].max():.1f} nm")
-
-# Load SiPM hits
-hits = pd.read_csv('photon_count_summary.csv')
-print(f"SiPMs hit: {len(hits)}")
-print(f"Peak SiPM: {hits['PhotonCount'].max()} photons")
-print(f"Average: {hits['PhotonCount'].mean():.1f} photons/SiPM")
-```
-
-### Example 2: Energy Scan (0.1 - 10 TeV)
-
-```bash
-cd build/
-for energy in 0.1 0.5 1.0 2.0 5.0 10.0; do
-    ./exampleB1 << EOF
-/run/initialize
-/gun/particle proton
-/gun/energy ${energy} TeV
-/gun/position 0 0 -30 cm
-/gun/direction 0 0 1
-/run/beamOn 10
-exit
-EOF
-    mv photon_count_summary.csv results/summary_${energy}TeV.csv
-done
-```
-
-### Example 3: Filter Performance Evaluation
-
-```python
-import pandas as pd
-import numpy as np
-
-# Load filter transmission
-filter_data = pd.read_csv('Filter/filter_design.csv')
-
-# Load Cherenkov spectrum from Geant4
-photons = pd.read_csv('build/cherenkov_photons.csv')
-wavelengths = photons['Wavelength_nm'].values
-
-# Calculate detected photons after filter
-detected = 0
-for wl in wavelengths:
-    # Interpolate filter transmission
-    T = np.interp(wl, filter_data['Wavelength_nm'], filter_data['Transmittance'])
-    if np.random.rand() < T:
-        detected += 1
-
-print(f"Before filter: {len(wavelengths)} photons")
-print(f"After filter: {detected} photons")
-print(f"Filter efficiency: {detected/len(wavelengths)*100:.1f}%")
-```
-
-### Example 4: Saturation Energy for Custom Array
-
-```python
-from Saturation.calculate_sipm_saturation import SiPMSaturationCalculator
-
-# Custom configuration: 30×30 array, advanced SiPMs
-calc = SiPMSaturationCalculator(
-    grid_size=30,
-    N_cell=100000,         # Advanced SiPM
-    PDE=0.25,
-    eta=0.2,
-    photons_per_GeV=9246,
-    peak_factor=3.4
-)
-
-calc.print_summary()
-print(f"\nSaturation energy: {calc.E_sat_TeV:.2f} TeV")
-```
-
----
-
-## Results and Outputs
-
-### Visualization
-
-**Geant4 Visualization** (OpenGL):
-- 3D detector geometry with SiPM arrays
-- Cherenkov photon tracks (color-coded by wavelength)
-- Particle trajectories
-
-**Python Plots**:
-- Filter transmission spectrum (160-600 nm)
-- SiPM hit distribution (2D density maps)
-- Saturation curves (E_sat vs array size)
-- Energy reconstruction (photon count vs energy)
-
-### Performance Metrics
-
-**Current Design** (18×18×6, 1.5mm CaF₂):
-- **Energy range**: 0.1 - 0.9 TeV (linear response)
-- **Filter rejection**: 99.87% @ 175 nm (scintillation)
-- **Filter transmission**: 97.22% @ 190-600 nm (Cherenkov)
-- **SiPM efficiency**: PDE = 25%, fill factor = 14.6%
-- **Angular resolution**: ~1° (from Cherenkov cone fitting)
-
-**Recommended Upgrade** (40×40×6):
-- **Energy range**: 0.1 - 4.5 TeV (5× improvement)
-- **Total SiPMs**: 9,600 (cost: ~$200k @ $20/SiPM)
-- **Fill factor**: 16% (better coverage)
+| Package | Purpose |
+|---------|---------|
+| numpy, scipy | Numerics, optimization |
+| matplotlib | Figures |
+| pandas | CSV ntuple analysis |
+| scikit-learn | Route B angular reconstruction |
 
 ---
 
 ## License
 
-This project is based on Geant4 Example B1 and follows the **Geant4 Software License**.
+Geant4 application code follows the **[Geant4 Software License](http://cern.ch/geant4/license)**. Acknowledge the Geant4 Collaboration in publications that use this simulation.
 
-**Geant4 License Summary**:
-- ✅ Free for research and commercial use
-- ✅ Modification and redistribution allowed
-- ⚠️ Must acknowledge Geant4 Collaboration in publications
-
-**Custom Code** (Filter/, Saturation/):
-- Released under **MIT License** (see individual files)
-
----
-
-## Contact and Support
-
-**Issues**: Please report bugs or feature requests via GitHub Issues
-
-**Documentation**: Full documentation available at [project wiki/docs]
-
-**Contributing**: Pull requests are welcome! Please follow the contribution guidelines.
+Python analysis scripts and project-specific C++ extensions are provided for research use alongside the manuscript. See individual file headers where applicable.
 
 ---
 
 ## Acknowledgments
 
-- **Geant4 Collaboration** - Monte Carlo simulation toolkit
-- **CERN** - ROOT data analysis framework
-- **Hamamatsu Photonics** - SiPM technical specifications
+- **Geant4 Collaboration** — Monte Carlo toolkit
+- **Hamamatsu Photonics** — SiPM specifications used in saturation modeling
+- Optical properties compiled from published LXe data (Aprile, Grace, Seidel, and related references cited in `paper/Paper.tex`)
 
 ---
 
-**Last Updated**: November 2025
-
-**Version**: 1.0.0
+**Last updated:** June 2026
