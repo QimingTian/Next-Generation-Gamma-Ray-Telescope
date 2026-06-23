@@ -1,0 +1,9 @@
+{
+  "run_id": 1,
+  "events": 50,
+  "geant4_version": "11.3.2",
+  "random_seed": "123456789",
+  "macro": "plane_source.mac",
+  "git_commit": "b3f0fdc",
+  "timestamp": "1782231369"
+}

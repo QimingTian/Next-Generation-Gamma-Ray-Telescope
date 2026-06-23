@@ -1,156 +1,95 @@
-//
-// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
-//
-//
-/// \file B1/src/RunAction.cc
-/// \brief Implementation of the B1::RunAction class
-
-// RunAction.cc
 #include "RunAction.hh"
 
-#include "G4AccumulableManager.hh"
-#include "G4LogicalVolume.hh"
-#include "G4LogicalVolumeStore.hh"
+#include "AnalysisManager.hh"
+
 #include "G4Run.hh"
 #include "G4RunManager.hh"
-#include "G4SDManager.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
+#include "Randomize.hh"
 
-#include "DetectorConstruction.hh"
-#include "PrimaryGeneratorAction.hh"
-#include "SiPMSD.hh"
-
+#include <cstdlib>
+#include <ctime>
 #include <fstream>
-#include <iostream>
-#include <map>
-#include <vector>
-#include <mutex>
+#include <sstream>
+#include <sys/stat.h>
+#include <cstdio>
+
+namespace
+{
+void EnsureDirectory(const G4String& path)
+{
+  mkdir(path.c_str(), 0755);
+}
+
+G4String GetGitCommit()
+{
+  FILE* pipe = popen("git rev-parse --short HEAD 2>/dev/null", "r");
+  if (!pipe) return "unknown";
+  char buffer[128];
+  G4String result = "unknown";
+  if (fgets(buffer, sizeof(buffer), pipe)) {
+    result = buffer;
+    while (!result.empty() && (result.back() == '\n' || result.back() == '\r')) {
+      result.pop_back();
+    }
+  }
+  pclose(pipe);
+  return result;
+}
+
+void WriteRunMeta(const G4String& prefix, const G4Run* run)
+{
+  std::ostringstream metaPath;
+  metaPath << prefix << "_meta.json";
+  std::ofstream out(metaPath.str());
+  if (!out) return;
+
+  const char* seedEnv = std::getenv("G4SEED");
+  const char* macroEnv = std::getenv("G4MACRO");
+
+  out << "{\n"
+      << "  \"run_id\": " << run->GetRunID() << ",\n"
+      << "  \"events\": " << run->GetNumberOfEvent() << ",\n"
+      << "  \"geant4_version\": \"11.3.2\",\n"
+      << "  \"random_seed\": \"" << (seedEnv ? seedEnv : "123456789") << "\",\n"
+      << "  \"macro\": \"" << (macroEnv ? macroEnv : "") << "\",\n"
+      << "  \"git_commit\": \"" << GetGitCommit() << "\",\n"
+      << "  \"timestamp\": \"" << std::time(nullptr) << "\"\n"
+      << "}\n";
+}
+}  // namespace
 
 namespace B1
 {
 
-RunAction::RunAction() : G4UserRunAction(), fEdep(0.), fEdep2(0.)
+RunAction::RunAction() = default;
+
+void RunAction::BeginOfRunAction(const G4Run* run)
 {
-  // �Զ��嵥λ
-  const G4double milligray = 1.e-3 * gray;
-  const G4double microgray = 1.e-6 * gray;
-  const G4double nanogray = 1.e-9 * gray;
-  const G4double picogray = 1.e-12 * gray;
+  G4RunManager::GetRunManager()->SetRandomNumberStore(true);
 
-  new G4UnitDefinition("milligray", "milliGy", "Dose", milligray);
-  new G4UnitDefinition("microgray", "microGy", "Dose", microgray);
-  new G4UnitDefinition("nanogray", "nanoGy", "Dose", nanogray);
-  new G4UnitDefinition("picogray", "picoGy", "Dose", picogray);
+  EnsureDirectory("data");
 
-  // ע��accumulables
-  G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
-  accumulableManager->RegisterAccumulable(fEdep);
-  accumulableManager->RegisterAccumulable(fEdep2);
-}
-
-void RunAction::BeginOfRunAction(const G4Run*)
-{
-  G4RunManager::GetRunManager()->SetRandomNumberStore(false);
-  G4AccumulableManager::Instance()->Reset();
-  if (IsMaster()) {
-    std::ofstream outFile("cherenkov_photons.csv", std::ios::trunc);
-    outFile << "EventID,Process,Count\n";
-    outFile.close();
-    G4cout << "[RunAction] Cleared cherenkov_photons.csv at run start." << G4endl;
+  if (!AnalysisManager::Instance()->IsBooked()) {
+    AnalysisManager::Instance()->Book();
   }
-}
 
-void RunAction::AddEdep(G4double edep)
-{
-  fEdep += edep;
-  fEdep2 += edep * edep;
-}
+  std::ostringstream oss;
+  oss << "data/" << fOutputTag << "_run" << run->GetRunID();
+  fOutputPrefix = oss.str();
+  AnalysisManager::Instance()->Open(fOutputPrefix);
 
-void RunAction::AddEventSummary(int eventID, const std::map<std::string, int>& processCounts)
-{
-  std::lock_guard<std::mutex> lock(fSummaryMutex);
-  fEventSummaries.emplace_back(eventID, processCounts);
+  G4cout << "### Run " << run->GetRunID() << " start, output: " << fOutputPrefix << G4endl;
 }
 
 void RunAction::EndOfRunAction(const G4Run* run)
 {
-  G4int nofEvents = run->GetNumberOfEvent();
-  if (nofEvents == 0) return;
+  AnalysisManager::Instance()->Close();
+  WriteRunMeta(fOutputPrefix, run);
 
-  G4AccumulableManager::Instance()->Merge();
-
-  G4double edep = fEdep.GetValue();
-  G4double edep2 = fEdep2.GetValue();
-
-  G4double rms = edep2 - edep * edep / nofEvents;
-  if (rms > 0.)
-    rms = std::sqrt(rms);
-  else
-    rms = 0.;
-
-  const auto detConstruction = static_cast<const DetectorConstruction*>(
-    G4RunManager::GetRunManager()->GetUserDetectorConstruction());
-  G4double mass = detConstruction->GetScoringVolume()->GetMass();
-  G4double dose = edep / mass;
-  G4double rmsDose = rms / mass;
-
-  const auto generatorAction = static_cast<const PrimaryGeneratorAction*>(
-    G4RunManager::GetRunManager()->GetUserPrimaryGeneratorAction());
-  G4String runCondition;
-  if (generatorAction) {
-    const G4ParticleGun* particleGun = generatorAction->GetParticleGun();
-    runCondition += particleGun->GetParticleDefinition()->GetParticleName();
-    runCondition += " of ";
-    G4double particleEnergy = particleGun->GetParticleEnergy();
-    runCondition += G4BestUnit(particleEnergy, "Energy");
-  }
-
-  if (IsMaster()) {
-    G4cout << G4endl << "--------------------End of Global Run-----------------------";
-    // Write the CSV file from all collected event summaries
-    std::ofstream outFile("cherenkov_photons.csv", std::ios::trunc);
-    outFile << "EventID,Process,Count\n";
-    for (const auto& entry : fEventSummaries) {
-      int eventID = entry.first;
-      const auto& processCounts = entry.second;
-      for (const auto& proc : processCounts) {
-        outFile << eventID << "," << proc.first << "," << proc.second << "\n";
-      }
-    }
-    outFile.close();
-    G4cout << "[RunAction] Wrote cherenkov_photons.csv with all event summaries." << G4endl;
-  }
-  else {
-    G4cout << G4endl << "--------------------End of Local Run------------------------";
-  }
-
-  G4cout << G4endl << " The run consists of " << nofEvents << " " << runCondition << G4endl
-         << " Cumulated dose per run, in scoring volume : " << G4BestUnit(dose, "Dose")
-         << " rms = " << G4BestUnit(rmsDose, "Dose") << G4endl
-         << "------------------------------------------------------------" << G4endl;
+  G4cout << "### Run " << run->GetRunID() << " end. Events: " << run->GetNumberOfEvent()
+         << G4endl;
 }
 
 }  // namespace B1

@@ -1,0 +1,17 @@
+/run/initialize
+
+/gps/particle gamma
+/gps/energy 200 GeV
+/gps/pos/type Point
+/gps/pos/centre 0 0 60 cm
+
+# Vertical incidence
+/gps/ang/type beam1d
+/gps/direction 0 0 -1
+/run/beamOn 1
+
+# 10 degree tilt toward -X (rotation about Y)
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -10 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 1

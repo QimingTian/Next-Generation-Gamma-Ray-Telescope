@@ -1,0 +1,9 @@
+{
+  "run_id": 0,
+  "events": 40,
+  "geant4_version": "11.3.2",
+  "random_seed": "99",
+  "macro": "energy_resolution_215.mac",
+  "git_commit": "b3f0fdc",
+  "timestamp": "1782218674"
+}

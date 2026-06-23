@@ -1,80 +1,112 @@
-//
-// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
-//
-//
-/// \file B1/src/EventAction.cc
-/// \brief Implementation of the B1::EventAction class
-
-// EventAction.cc
-
 #include "EventAction.hh"
 
-#include "G4Event.hh"
-#include "G4RunManager.hh"
-#include "G4SDManager.hh"
-#include "G4SystemOfUnits.hh"
-
+#include "AnalysisManager.hh"
 #include "RunAction.hh"
+#include "RuntimeConfig.hh"
 #include "SiPMSD.hh"
 
-#include <fstream>
-#include <iostream>
-#include <map> // Added for process counting
+#include "G4Event.hh"
+#include "G4PrimaryVertex.hh"
+#include "G4PrimaryParticle.hh"
+#include "G4SDManager.hh"
+#include "G4SystemOfUnits.hh"
 
 namespace B1
 {
 
-EventAction::EventAction(RunAction* runAction)
-  : fRunAction(runAction), fEdep(0.)
-{}
+EventAction::EventAction(RunAction* runAction) : fRunAction(runAction) {}
 
-void EventAction::BeginOfEventAction(const G4Event*)
+void EventAction::BeginOfEventAction(const G4Event* event)
 {
   fEdep = 0.;
-  fProcessCounts.clear();
+  fShowerZMin = 1e9;
+  fShowerZMax = -1e9;
+  fPrimaryEnergy = 0.;
+  fPrimaryDir = G4ThreeVector(0, 0, 1);
+  fPrimaryPos = G4ThreeVector(0, 0, 0);
+  for (G4int i = 0; i < kProfileBins; ++i) {
+    fLongProfile[i] = 0.;
+  }
+
+  const auto* vertex = event->GetPrimaryVertex();
+  if (vertex) {
+    fPrimaryPos = vertex->GetPosition();
+    const auto* particle = vertex->GetPrimary();
+    if (particle) {
+      fPrimaryEnergy = particle->GetKineticEnergy();
+      fPrimaryDir = particle->GetMomentumDirection();
+    }
+  }
+}
+
+void EventAction::UpdateShowerBounds(const G4ThreeVector& pos)
+{
+  if (pos.z() < fShowerZMin) fShowerZMin = pos.z();
+  if (pos.z() > fShowerZMax) fShowerZMax = pos.z();
+}
+
+void EventAction::AddLongitudinalDeposit(G4double depth_mm, G4double edep)
+{
+  if (depth_mm < 0. || depth_mm >= kProfileMaxMm || edep <= 0.) return;
+  const G4int bin = static_cast<G4int>(depth_mm / kProfileMaxMm * kProfileBins);
+  if (bin >= 0 && bin < kProfileBins) {
+    fLongProfile[bin] += edep;
+  }
+}
+
+G4double EventAction::ComputeL90() const
+{
+  G4double total = 0.;
+  for (G4int i = 0; i < kProfileBins; ++i) {
+    total += fLongProfile[i];
+  }
+  if (total <= 0.) return 0.;
+
+  G4double cumulative = 0.;
+  for (G4int i = 0; i < kProfileBins; ++i) {
+    cumulative += fLongProfile[i];
+    if (cumulative >= 0.9 * total) {
+      return (static_cast<G4double>(i) + 0.5) * kProfileMaxMm / kProfileBins;
+    }
+  }
+  return kProfileMaxMm;
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
-  if (!fRunAction) {
-    G4cerr << "[EventAction] fRunAction is null!" << G4endl;
-    return;
-  }
-  fRunAction->AddEdep(fEdep);
+  const G4int eventID = event->GetEventID();
+  G4int nCherenkov = 0;
+  G4int nScint = 0;
 
-  G4SDManager* sdManager = G4SDManager::GetSDMpointer();
-  auto sipmSD = (SiPMSD*)sdManager->FindSensitiveDetector("SiPMSD");
-  if (!sipmSD) {
-    G4cerr << "[EventAction] Error: Can't find SiPMSD!" << G4endl;
-    return;
+  auto* sd = dynamic_cast<SiPMSD*>(G4SDManager::GetSDMpointer()->FindSensitiveDetector("SiPMSD"));
+  if (sd) {
+    nCherenkov = sd->GetNCherenkov();
+    nScint = sd->GetNScint();
+
+    if (RuntimeConfig::Instance().WritePhotons()) {
+      for (const auto& hit : sd->GetHits()) {
+        AnalysisManager::Instance()->FillPhoton(eventID, hit.sipmID, hit.position.x(),
+                                                hit.position.y(), hit.position.z(), hit.time,
+                                                hit.wavelength_nm, hit.processName);
+      }
+    }
+    for (const auto& entry : sd->GetSiPMCounts()) {
+      AnalysisManager::Instance()->FillSiPMSummary(eventID, entry.first, entry.second);
+    }
   }
-  const auto& hits = sipmSD->GetHits();
-  for (const auto& hit : hits) {
-    fProcessCounts[hit.processName]++;
-  }
-  fRunAction->AddEventSummary(event->GetEventID(), fProcessCounts);
+
+  const G4double showerLength =
+    (fShowerZMax > fShowerZMin) ? (fShowerZMax - fShowerZMin) : 0.;
+  const G4double l90 = ComputeL90();
+
+  const G4double halfBox = 500. * mm;
+  const G4bool truncated =
+    (fShowerZMin < -halfBox + 5. * mm) || (fShowerZMax > halfBox - 5. * mm) ||
+    (l90 > 0.95 * kProfileMaxMm);
+
+  AnalysisManager::Instance()->FillEvent(eventID, fPrimaryEnergy, fPrimaryDir.x(),
+                                         fPrimaryDir.y(), fPrimaryDir.z(), nCherenkov, nScint,
+                                         fEdep, showerLength, l90, truncated ? 1 : 0);
 }
 
 }  // namespace B1

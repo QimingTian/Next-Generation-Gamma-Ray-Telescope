@@ -21,12 +21,20 @@ import pandas as pd
 from scipy.interpolate import interp1d
 import os
 import glob
+from pathlib import Path
 
-# Clean old outputs
-for f in glob.glob('filter_*.png') + glob.glob('filter_*.pdf') + glob.glob('filter_*.csv'):
+ROOT = Path(__file__).resolve().parents[1]
+FIGURES = ROOT / "figures"
+OUTPUT = ROOT / "analysis" / "output"
+FIGURES.mkdir(parents=True, exist_ok=True)
+OUTPUT.mkdir(parents=True, exist_ok=True)
+os.chdir(OUTPUT)
+
+# Clean old outputs in analysis/output
+for f in glob.glob('filter_*'):
     try:
         os.remove(f)
-    except:
+    except OSError:
         pass
 
 
@@ -400,9 +408,9 @@ def plot_results(wavelengths, T):
     ax2.set_ylim(-2, 102)
     
     plt.tight_layout()
-    plt.savefig('filter_design.png', dpi=300, bbox_inches='tight')
-    plt.savefig('filter_design.pdf', bbox_inches='tight')
-    print("✅ Plots saved: filter_design.png / .pdf")
+    plt.savefig(FIGURES / 'filter_design.png', dpi=300, bbox_inches='tight')
+    plt.savefig(FIGURES / 'filter_design.pdf', bbox_inches='tight')
+    print("Plots saved: figures/filter_design.png")
     plt.close()
 
 
@@ -434,19 +442,17 @@ def main():
     # Save data
     print("💾 Saving data...")
     df = pd.DataFrame({
-        'Wavelength_nm': filter_sys.wavelengths,
-        'Transmittance': T,
-        'Transmittance_percent': T * 100
+        'wavelength_nm': filter_sys.wavelengths,
+        'transmission': T,
+        'transmittance_percent': T * 100
     })
     
-    # Add comparison with sapphire
-    df['Note'] = ''
-    df.loc[df['Wavelength_nm'] == 175, 'Note'] = 'Xe scintillation - must block'
-    df.loc[df['Wavelength_nm'] == 190, 'Note'] = 'Design cutoff'
-    df.loc[df['Wavelength_nm'] == 200, 'Note'] = '70% better than sapphire!'
+    df.loc[df['wavelength_nm'] == 175, 'note'] = 'Xe scintillation cutoff'
+    df.loc[df['wavelength_nm'] == 190, 'note'] = 'Design cutoff'
     
+    df.to_csv('filter_transmission.csv', index=False)
     df.to_csv('filter_design.csv', index=False)
-    print("✅ Data saved: filter_design.csv")
+    print("Data saved: analysis/output/filter_transmission.csv")
     
     # Plot
     plot_results(filter_sys.wavelengths, T)

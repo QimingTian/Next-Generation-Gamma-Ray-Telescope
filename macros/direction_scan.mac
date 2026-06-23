@@ -1,0 +1,129 @@
+/run/initialize
+
+/gps/particle gamma
+/gps/pos/type Point
+/gps/pos/centre 0 0 60 cm
+
+# E=30 GeV theta=0 phi=0
+/gps/energy 30 GeV
+/gps/ang/type beam1d
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=30 GeV theta=5 phi=0
+/gps/energy 30 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -5 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=30 GeV theta=10 phi=0
+/gps/energy 30 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -10 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=30 GeV theta=20 phi=0
+/gps/energy 30 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -20 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=30 GeV theta=30 phi=0
+/gps/energy 30 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -30 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=30 GeV theta=45 phi=0
+/gps/energy 30 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -45 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=100 GeV theta=0 phi=0
+/gps/energy 100 GeV
+/gps/ang/type beam1d
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=100 GeV theta=5 phi=0
+/gps/energy 100 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -5 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=100 GeV theta=10 phi=0
+/gps/energy 100 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -10 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=100 GeV theta=20 phi=0
+/gps/energy 100 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -20 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=100 GeV theta=30 phi=0
+/gps/energy 100 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -30 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=100 GeV theta=45 phi=0
+/gps/energy 100 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -45 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=300 GeV theta=0 phi=0
+/gps/energy 300 GeV
+/gps/ang/type beam1d
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=300 GeV theta=5 phi=0
+/gps/energy 300 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -5 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=300 GeV theta=10 phi=0
+/gps/energy 300 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -10 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=300 GeV theta=20 phi=0
+/gps/energy 300 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -20 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=300 GeV theta=30 phi=0
+/gps/energy 300 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -30 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+
+# E=300 GeV theta=45 phi=0
+/gps/energy 300 GeV
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -45 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 12
+

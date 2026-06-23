@@ -1,0 +1,9 @@
+{
+  "run_id": 1,
+  "events": 1,
+  "geant4_version": "11.3.2",
+  "random_seed": "123456789",
+  "macro": "angle_scan.mac",
+  "git_commit": "b3f0fdc",
+  "timestamp": "1782173123"
+}
