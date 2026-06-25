@@ -16,15 +16,16 @@ DATA = ROOT / "data"
 PHASE2_TOTAL = 216_000
 
 
-def count_lines_fast(paths: list[Path]) -> int:
-    if not paths:
-        return 0
+def count_events_in_files(paths: list[Path]) -> int:
+    """Count data rows in Geant4 wcsv ntuples (skip # comment header lines)."""
     total = 0
     for p in paths:
         try:
-            out = subprocess.check_output(["wc", "-l", str(p)], text=True)
-            total += max(0, int(out.split()[0]) - 1)
-        except (subprocess.CalledProcessError, ValueError, OSError):
+            with p.open() as fh:
+                total += sum(
+                    1 for line in fh if line.strip() and not line.lstrip().startswith("#")
+                )
+        except OSError:
             continue
     return total
 
@@ -34,7 +35,7 @@ def shard_progress(energy: int, shards_total: int = 128) -> dict:
     files = sorted(BUILD_DATA.glob(f"{prefix}*_nt_events.csv"))
     if not files:
         files = sorted(DATA.glob(f"{prefix}*_nt_events.csv"))
-    events = min(1200, count_lines_fast(files))
+    events = min(1200, count_events_in_files(files))
     shards_started = len(files)
     return {
         "energy_GeV": energy,
@@ -51,7 +52,7 @@ def phase2_progress() -> dict:
     files = sorted(BUILD_DATA.glob("direction_scan_*_run0_nt_events.csv"))
     if not files:
         files = sorted(DATA.glob("direction_scan_*_run0_nt_events.csv"))
-    events = count_lines_fast(files)
+    events = count_events_in_files(files)
     jobs_total = 1728
     jobs_started = len(files)
     log_path = DATA / "maxcloud_phase2.log"

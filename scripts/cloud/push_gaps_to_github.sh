@@ -8,9 +8,13 @@ BUILD_DATA="$ROOT/build/data"
 
 echo "=== Pack gaps event CSVs ==="
 mkdir -p "$DATA"
-tar czf "$DATA/gaps_events.tar.gz" -C "$BUILD_DATA" \
-  $(ls "$BUILD_DATA"/aeff_energy_500GeV_shard*_nt_events.csv 2>/dev/null | xargs -n1 basename) \
-  $(ls "$BUILD_DATA"/aeff_energy_1000GeV_shard*_nt_events.csv 2>/dev/null | xargs -n1 basename)
+shopt -s nullglob
+files=( "$BUILD_DATA"/aeff_energy_500GeV_shard*_nt_events.csv "$BUILD_DATA"/aeff_energy_1000GeV_shard*_nt_events.csv )
+if ((${#files[@]} == 0)); then
+  echo "No gaps shard CSVs under $BUILD_DATA" >&2
+  exit 1
+fi
+tar czf "$DATA/gaps_events.tar.gz" -C "$BUILD_DATA" "${files[@]##*/}"
 ls -lh "$DATA/gaps_events.tar.gz"
 
 echo "=== Git push tarball ==="
