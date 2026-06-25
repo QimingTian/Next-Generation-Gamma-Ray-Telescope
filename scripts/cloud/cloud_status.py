@@ -140,7 +140,8 @@ def main() -> None:
         "energies": [shard_progress(e) for e in (500, 1000)],
         "total_events": sum(shard_progress(e)["events_done"] for e in (500, 1000)),
         "total_target": 2400,
-        "campaign_done": gaps_done or sum(shard_progress(e)["events_done"] for e in (500, 1000)) >= 2400,
+        "campaign_done": gaps_done
+        or all(shard_progress(e)["events_done"] >= 1200 for e in (500, 1000)),
     }
     gaps["total_pct"] = round(min(100.0, 100.0 * gaps["total_events"] / 2400), 1)
 

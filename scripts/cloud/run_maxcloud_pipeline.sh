@@ -14,21 +14,25 @@ wait_gaps() {
       echo "Gaps complete $(date)"
       return 0
     fi
-    # Data-complete fallback: 2400 events across E500+E1000 shards
+    # Data-complete fallback: each energy must reach 1200 real primaries (not CSV line count).
     if python3 - <<'PY' 2>/dev/null
 from pathlib import Path
+
+def count_events(path: Path) -> int:
+    n = 0
+    with path.open() as fh:
+        for line in fh:
+            if line.strip() and not line.lstrip().startswith("#"):
+                n += 1
+    return n
+
 d = Path("/root/GammaRayTelescope/build/data")
-ev = 0
 for e in (500, 1000):
-    files = list(d.glob(f"aeff_energy_{e}GeV_shard*_run0_nt_events.csv"))
-    for f in files:
-        try:
-            ev += max(0, sum(1 for _ in open(f)) - 1)
-        except OSError:
-            pass
-if ev >= 2400:
-    raise SystemExit(0)
-raise SystemExit(1)
+    files = sorted(d.glob(f"aeff_energy_{e}GeV_shard*_run0_nt_events.csv"))
+    ev = sum(count_events(f) for f in files)
+    if ev < 1200:
+        raise SystemExit(1)
+raise SystemExit(0)
 PY
     then
       echo "Gaps data complete (2400 events) $(date)"

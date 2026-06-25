@@ -51,10 +51,16 @@ run_pool() {
 }
 
 case "$MODE" in
-  gaps)
+  gaps|gaps_e1000)
     export G4ACD=off  # ACD geometry segfaults on Linux; not needed for A_eff(E)
-    python3 "$ROOT/scripts/generate_gaps_campaign.py" \
-      --cloud-shard --shard-count "$NCPU" --aeff-energy-events 1200
+    if [ "$MODE" = "gaps_e1000" ]; then
+      python3 "$ROOT/scripts/generate_gaps_campaign.py" \
+        --cloud-shard --shard-count "$NCPU" --aeff-energy-events 1200 \
+        --cloud-energies 1000
+    else
+      python3 "$ROOT/scripts/generate_gaps_campaign.py" \
+        --cloud-shard --shard-count "$NCPU" --aeff-energy-events 1200
+    fi
     grep '|em$' "$ROOT/macros/gaps/cloud_manifest.txt" | while IFS='|' read -r tag macro _ _; do
       echo "${tag}|gaps/${macro}|0"
     done | run_pool
@@ -78,7 +84,7 @@ case "$MODE" in
     done | run_pool
     ;;
   *)
-    echo "Usage: $0 {gaps|phase2|acd}" >&2
+    echo "Usage: $0 {gaps|gaps_e1000|phase2|acd}" >&2
     exit 1
     ;;
 esac
