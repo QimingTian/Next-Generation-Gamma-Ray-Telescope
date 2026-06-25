@@ -22,7 +22,8 @@ class AnalysisManager
                     G4double t, G4double wavelength_nm, const G4String& process);
     void FillEvent(G4int eventID, G4double ePrimary, G4double dirX, G4double dirY,
                    G4double dirZ, G4int nCherenkov, G4int nScint, G4double edep,
-                   G4double showerLength, G4double l90_mm, G4int truncated);
+                   G4double showerLength, G4double l90_mm, G4int truncated,
+                   G4int acdNTiles = 0, G4double acdEdepMeV = 0., G4int acdVeto = 0);
     void FillSiPMSummary(G4int eventID, G4int sipmID, G4int photonCount);
 
   private:

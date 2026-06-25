@@ -7,20 +7,20 @@
 /gps/direction 0 0 -1
 
 /gps/energy 50 GeV
-/run/beamOn 10
+/run/beamOn 15
 
 /gps/energy 100 GeV
-/run/beamOn 10
+/run/beamOn 15
 
 /gps/energy 200 GeV
-/run/beamOn 10
+/run/beamOn 15
 
 /gps/energy 300 GeV
-/run/beamOn 10
+/run/beamOn 15
 
 /gps/energy 500 GeV
-/run/beamOn 10
+/run/beamOn 15
 
 /gps/energy 1000 GeV
-/run/beamOn 10
+/run/beamOn 15
 

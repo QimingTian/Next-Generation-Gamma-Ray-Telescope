@@ -25,12 +25,19 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     static constexpr G4int kSiPMsPerFace = kSiPMGridSize * kSiPMGridSize;
     static constexpr G4int kTotalSiPMs = kSiPMsPerFace * 6;
 
+    // Fermi-LAT-style ACD: 16×16 scintillator tiles per face, 1 cm thick.
+    static constexpr G4int kACDGridSize = 16;
+    static constexpr G4int kACDTilesPerFace = kACDGridSize * kACDGridSize;
+    static constexpr G4int kTotalACDTiles = kACDTilesPerFace * 6;
+
   private:
     void SetupOpticalSurfaces(G4Material* shell_mat, G4LogicalVolume* logicShell,
                               G4LogicalVolume* logicSiPM);
+    static G4bool ACDEnabled();
 
     G4LogicalVolume* fScoringVolume = nullptr;
     G4LogicalVolume* fLogicSiPM = nullptr;
+    G4LogicalVolume* fLogicACDTile = nullptr;
 };
 
 }  // namespace B1

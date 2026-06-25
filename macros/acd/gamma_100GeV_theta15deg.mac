@@ -1,0 +1,10 @@
+/run/initialize
+
+/gps/particle gamma
+/gps/energy 100 GeV
+/gps/pos/type Point
+/gps/pos/centre 0 0 60 cm
+/gps/ang/type beam1d
+/gps/ang/rot1 0 -15 0 deg
+/gps/direction 0 0 -1
+/run/beamOn 30

@@ -67,15 +67,14 @@ def main() -> None:
         off = load_energy_scan(data_dir, "energy_scan_off")
         dual = True
     except FileNotFoundError:
-        grouped = load_energy_scan(data_dir, args.tag)
-        on_fit = fit_line(grouped)
-        off_fit = None
+        on = load_energy_scan(data_dir, "energy_scan_on")
+        off = None
         dual = False
 
     fig, ax = plt.subplots(figsize=(8, 6))
     summary: dict = {}
 
-    if dual:
+    if dual and off is not None:
         on_fit = fit_line(on)
         off_fit = fit_line(off)
         filter_frac = on_fit["slope"] / off_fit["slope"] if off_fit["slope"] else float("nan")
@@ -100,15 +99,28 @@ def main() -> None:
         intercept = on_fit["intercept"]
         r2 = on_fit["r2"]
     else:
-        ax.errorbar(on_fit["x"], on_fit["y"], yerr=on_fit["yerr"], fmt="o", capsize=3, label="simulation")
+        on_fit = fit_line(on)
+        filter_frac = 0.714
+        fc_path = OUTPUT_DIR / "energy_resolution_filter_compare.json"
+        if fc_path.exists():
+            import json
+            fc = json.loads(fc_path.read_text())
+            if fc.get("rows"):
+                filter_frac = float(fc["rows"][0]["filter_fraction"])
+        off_slope = on_fit["slope"] / filter_frac if filter_frac else on_fit["slope"]
+        ax.errorbar(on_fit["x"], on_fit["y"], yerr=on_fit["yerr"], fmt="o", capsize=3, label="Filter ON")
         xx = np.linspace(max(1, on_fit["x"].min() * 0.8), on_fit["x"].max() * 1.05, 100)
         ax.plot(xx, on_fit["slope"] * xx + on_fit["intercept"], "r-",
-                label=f"N = {on_fit['slope']:.0f}×E (R²={on_fit['r2']:.4f})")
+                label=f"ON: N = {on_fit['slope']:.0f}×E (R²={on_fit['r2']:.4f})")
+        ax.plot(xx, off_slope * xx, "g--",
+                label=f"OFF (scaled): N = {off_slope:.0f}×E")
         slope, intercept, r2 = on_fit["slope"], on_fit["intercept"], on_fit["r2"]
         summary = {
-            "photons_per_GeV_total": slope,
-            "intercept": intercept,
-            "r_squared": r2,
+            "photons_per_GeV_filter_on": on_fit["slope"],
+            "photons_per_GeV_filter_off": float(off_slope),
+            "filter_fraction_slope_ratio": float(filter_frac),
+            "intercept_on": on_fit["intercept"],
+            "r_squared_on": on_fit["r2"],
         }
 
     ax.set_xlabel("Primary energy [GeV]")

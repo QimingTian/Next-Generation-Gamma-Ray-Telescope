@@ -1,0 +1,10 @@
+aeff_energy_100GeV|aeff_E100GeV.mac|on|em
+aeff_energy_300GeV|aeff_E300GeV.mac|on|em
+aeff_energy_500GeV|aeff_E500GeV.mac|on|em
+aeff_energy_1000GeV|aeff_E1000GeV.mac|on|em
+aeff_theta_15deg|aeff_theta15deg.mac|on|em
+aeff_theta_30deg|aeff_theta30deg.mac|on|em
+aeff_theta_45deg|aeff_theta45deg.mac|on|em
+proton_supplement|proton_supp_100GeV.mac|on|hadronic
+proton_supplement|proton_supp_300GeV.mac|on|hadronic
+proton_supplement|proton_supp_1000GeV.mac|on|hadronic

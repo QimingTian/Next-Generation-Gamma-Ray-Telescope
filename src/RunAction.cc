@@ -5,6 +5,7 @@
 #include "G4Run.hh"
 #include "G4RunManager.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4Threading.hh"
 #include "G4UnitsTable.hh"
 #include "Randomize.hh"
 
@@ -69,6 +70,10 @@ void RunAction::BeginOfRunAction(const G4Run* run)
 {
   G4RunManager::GetRunManager()->SetRandomNumberStore(true);
 
+  if (!G4Threading::IsMasterThread()) {
+    return;
+  }
+
   EnsureDirectory("data");
 
   if (!AnalysisManager::Instance()->IsBooked()) {
@@ -85,6 +90,10 @@ void RunAction::BeginOfRunAction(const G4Run* run)
 
 void RunAction::EndOfRunAction(const G4Run* run)
 {
+  if (!G4Threading::IsMasterThread()) {
+    return;
+  }
+
   AnalysisManager::Instance()->Close();
   WriteRunMeta(fOutputPrefix, run);
 

@@ -4,6 +4,7 @@
 #include "RunAction.hh"
 #include "RuntimeConfig.hh"
 #include "SiPMSD.hh"
+#include "ACDSD.hh"
 
 #include "G4Event.hh"
 #include "G4PrimaryVertex.hh"
@@ -104,9 +105,21 @@ void EventAction::EndOfEventAction(const G4Event* event)
     (fShowerZMin < -halfBox + 5. * mm) || (fShowerZMax > halfBox - 5. * mm) ||
     (l90 > 0.95 * kProfileMaxMm);
 
+  G4int acdNTiles = 0;
+  G4double acdEdepMeV = 0.;
+  G4int acdVeto = 0;
+
+  auto* acdSD = dynamic_cast<ACDSD*>(G4SDManager::GetSDMpointer()->FindSensitiveDetector("ACDSD"));
+  if (acdSD) {
+    acdNTiles = acdSD->GetNTilesHit();
+    acdEdepMeV = acdSD->GetTotalEdepMeV();
+    acdVeto = acdSD->GetVeto() ? 1 : 0;
+  }
+
   AnalysisManager::Instance()->FillEvent(eventID, fPrimaryEnergy, fPrimaryDir.x(),
                                          fPrimaryDir.y(), fPrimaryDir.z(), nCherenkov, nScint,
-                                         fEdep, showerLength, l90, truncated ? 1 : 0);
+                                         fEdep, showerLength, l90, truncated ? 1 : 0, acdNTiles,
+                                         acdEdepMeV, acdVeto);
 }
 
 }  // namespace B1

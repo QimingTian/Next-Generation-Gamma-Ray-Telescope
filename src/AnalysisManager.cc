@@ -29,7 +29,7 @@ void AnalysisManager::Book()
   auto analysis = G4AnalysisManager::Instance();
   analysis->SetDefaultFileType("csv");
   analysis->SetVerboseLevel(1);
-  analysis->SetNtupleMerging(false);
+  analysis->SetNtupleMerging(true);
 
   fPhotonNtuple = analysis->CreateNtuple("photons", "Optical photon hits");
   analysis->CreateNtupleIColumn(fPhotonNtuple, "EventID");
@@ -54,6 +54,9 @@ void AnalysisManager::Book()
   analysis->CreateNtupleDColumn(fEventNtuple, "ShowerLength_mm");
   analysis->CreateNtupleDColumn(fEventNtuple, "L90_mm");
   analysis->CreateNtupleIColumn(fEventNtuple, "L90_truncated");
+  analysis->CreateNtupleIColumn(fEventNtuple, "ACD_n_tiles");
+  analysis->CreateNtupleDColumn(fEventNtuple, "ACD_edep_MeV");
+  analysis->CreateNtupleIColumn(fEventNtuple, "ACD_veto");
   analysis->FinishNtuple();
 
   fSiPMNtuple = analysis->CreateNtuple("sipm_summary", "Per-SiPM photon counts");
@@ -95,7 +98,8 @@ void AnalysisManager::FillPhoton(G4int eventID, G4int sipmID, G4double x, G4doub
 void AnalysisManager::FillEvent(G4int eventID, G4double ePrimary, G4double dirX,
                                 G4double dirY, G4double dirZ, G4int nCherenkov,
                                 G4int nScint, G4double edep, G4double showerLength,
-                                G4double l90_mm, G4int truncated)
+                                G4double l90_mm, G4int truncated, G4int acdNTiles,
+                                G4double acdEdepMeV, G4int acdVeto)
 {
   auto analysis = G4AnalysisManager::Instance();
   analysis->FillNtupleIColumn(fEventNtuple, 0, eventID);
@@ -109,6 +113,9 @@ void AnalysisManager::FillEvent(G4int eventID, G4double ePrimary, G4double dirX,
   analysis->FillNtupleDColumn(fEventNtuple, 8, showerLength / mm);
   analysis->FillNtupleDColumn(fEventNtuple, 9, l90_mm / mm);
   analysis->FillNtupleIColumn(fEventNtuple, 10, truncated);
+  analysis->FillNtupleIColumn(fEventNtuple, 11, acdNTiles);
+  analysis->FillNtupleDColumn(fEventNtuple, 12, acdEdepMeV);
+  analysis->FillNtupleIColumn(fEventNtuple, 13, acdVeto);
   analysis->AddNtupleRow(fEventNtuple);
 }
 

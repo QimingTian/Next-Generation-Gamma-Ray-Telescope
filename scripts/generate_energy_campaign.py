@@ -41,7 +41,7 @@ def main() -> None:
     write_energy_scan(args.cal_events, MACROS / "energy_scan.mac")
     write_energy_resolution(100, args.res_events, MACROS / "energy_resolution_100.mac")
     write_energy_resolution(215, args.res_events, MACROS / "energy_resolution_215.mac")
-    write_energy_resolution(1000, 15, MACROS / "peak_factor.mac")
+    write_energy_resolution(1000, 30, MACROS / "peak_factor.mac")
     print("Wrote energy_scan.mac, energy_resolution_*.mac, peak_factor.mac")
 
 

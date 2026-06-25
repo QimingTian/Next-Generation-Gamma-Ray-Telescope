@@ -24,7 +24,8 @@ def main() -> None:
     if not files:
         raise FileNotFoundError(f"No events for tag {args.tag}")
 
-    events = parse_geant4_csv(files[0])
+    import pandas as pd
+    events = pd.concat([parse_geant4_csv(f) for f in files], ignore_index=True)
     n_thrown = len(events)
     n_interact = int((events["Edep_MeV"] > args.edep_threshold_mev).sum())
     a_eff = (n_interact / n_thrown) * args.throw_area_m2 if n_thrown else float("nan")

@@ -10,5 +10,5 @@
 /gps/ang/type beam1d
 /gps/direction 0 0 -1
 
-# Effective-area study: 1000 primaries over extended plane
-/run/beamOn 1000
+# Effective-area study: 5000 primaries over extended plane
+/run/beamOn 5000

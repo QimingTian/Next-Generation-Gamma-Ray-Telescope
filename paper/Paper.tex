@@ -30,7 +30,7 @@
 \journalinfo{Preprint submitted to arXiv}
 
 \begin{abstract}
-We present a publication-grade Geant4 simulation of a cubic liquid xenon (LXe) Cherenkov telescope instrumented with 1{,}944 interior SiPMs (18$\times$18 per face). Electromagnetic cascades from 50--1000~GeV $\gamma$ rays produce a linear photon yield of $9781$~photons~GeV$^{-1}$ (filter OFF), reduced to $\sim 6982$~photons~GeV$^{-1}$ after per-photon CaF$_2$/MgF$_2$ filter transmission ($\bar{T}\approx 0.71$). At 215~GeV the photon-counting energy resolution is $\sigma_E/E \approx 0.50\%$ (filter ON), consistent with Poisson statistics. Cherenkov light maps show a measured peak-to-mean SiPM occupancy factor of $\sim$2.2$\times$, setting a readout saturation limit $E_{\rm sat}\approx 1.63$~TeV for 14{,}400-cell SiPMs; angular reconstruction via shower-shape observables remains accurate above this energy ceiling. The fully contained geometry, GPS-driven macro campaigns, and open analysis pipeline establish a reproducible baseline for comparing this concept with \textit{Fermi}-LAT and CTA.mises.
+We present a publication-grade Geant4 simulation of a cubic liquid xenon (LXe) Cherenkov telescope instrumented with 1{,}944 interior SiPMs (18$\times$18 per face). Electromagnetic cascades from 50--1000~GeV $\gamma$ rays produce a linear photon yield of $9683$~photons~GeV$^{-1}$ (filter OFF), reduced to $\sim 6920$~photons~GeV$^{-1}$ after per-photon CaF$_2$/MgF$_2$ filter transmission ($\bar{T}\approx 0.71$). At 215~GeV the photon-counting energy resolution is $\sigma_E/E \approx 0.50\%$ (filter ON), consistent with Poisson statistics. Cherenkov light maps show a measured peak-to-mean SiPM occupancy factor of $2.07\pm 0.45\times$, setting a readout saturation limit $E_{\rm sat}\approx 1.75$~TeV for 14{,}400-cell SiPMs; geometric angular reconstruction achieves $\sigma_{68}\approx 0.13^\circ$ for vertical incidence and remains shape-based above this energy ceiling. The fully contained geometry, GPS-driven macro campaigns, and open analysis pipeline establish a reproducible baseline for comparing this concept with \textit{Fermi}-LAT and CTA.mises.
 \end{abstract}
 
 \keywords{\uat{Dark Matter}{353} --- \uat{Gamma-ray telescopes}{634} --- \uat{High energy astrophysics}{739} --- \uat{Particle astrophysics}{96}}
@@ -218,7 +218,7 @@ Cherenkov radiation in LXe forms a continuous spectrum extending from the vacuum
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.85\linewidth]{energy_calibration.png}
-\caption{Energy calibration from the regenerated Geant4 campaign (50--1000~GeV). Total detected photons follow $N = 9781 \times E$~photons~GeV$^{-1}$ (filter OFF, $R^2>0.999$); per-photon CaF$_2$/MgF$_2$ transmission reduces the effective yield to $\sim 6982 \times E$ (filter ON).}
+\caption{Energy calibration from the regenerated Geant4 campaign (50--1000~GeV). Total detected photons follow $N = 9683 \times E$~photons~GeV$^{-1}$ (filter OFF, $R^2>0.999$); per-photon CaF$_2$/MgF$_2$ transmission reduces the effective yield to $\sim 6920 \times E$ (filter ON).}
 \label{fig:energy_calibration}
 \end{figure}
 
@@ -447,13 +447,13 @@ The design presented here represents a preliminary optimization based on current
     \centering
     SiPMs Hits Density Vertical\\[6pt]
     \includegraphics[width=1\linewidth]{DensityMapVerticalMarked.png}
-    \caption{SiPM hits density maps for a 200~GeV gamma ray incident vertically on the center of the top surface (regenerated Geant4 campaign). The directional pattern is energy-independent; the peak-to-mean occupancy factor for this event is $\sim$2.2$\times$.}
+    \caption{SiPM hits density maps for a 200~GeV gamma ray incident vertically on the center of the top surface (regenerated Geant4 campaign). The directional pattern is energy-independent; the peak-to-mean occupancy factor for this event is $\sim$2.1$\times$.}
     \label{fig:verticaldensity}
 \end{figure}
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\linewidth]{recon_examples.png}
-    \caption{Route~A reconstructed shower axis (red) compared with Monte Carlo truth (blue dashed) for vertical and tilted 200~GeV events. The luminous axis is inferred from opposite-face centroid chords and flux-asymmetry sign fixing.}
+    \caption{Route~A reconstructed shower axis (red) compared with Monte Carlo truth (blue dashed) for vertical and tilted 200~GeV events. The luminous axis is inferred from the top--bottom brightness-weighted centroid chord.}
     \label{fig:cube_with_line}
 \end{figure}
 \begin{figure}[htbp]
@@ -471,9 +471,9 @@ The design presented here represents a preliminary optimization based on current
 \end{figure}
 Geant4 simulations reveal a diffuse Cherenkov \emph{light blob} rather than a sharp optical ring: multiple scattering, chromatic dispersion, and shower development smear the ideal cone into a broad six-face pattern (Figures~\ref{fig:verticaldensity}--\ref{fig:Tilteddensity}). Direction information is encoded in the \emph{shape} of this pattern---face centroid offsets, inter-face flux asymmetry, and second moments---rather than in absolute photon count, so angular reconstruction can remain accurate even when individual SiPM channels saturate at high energy.
 
-We implement a two-stage reconstruction pipeline on per-SiPM photon counts (18$\times$18 per face, filter-weighted detection efficiency in simulation). \textbf{Route~A (geometric)} computes brightness-weighted centroids on each face, selects the opposite-face pair with largest flux asymmetry, and defines the shower axis along the chord connecting those centroids; the forward/backward sign is fixed using net flux asymmetry along each Cartesian axis. \textbf{Route~B (ML)} trains an MLP regressor on the normalized $6\times18\times18$ count tensor with angular loss, using the direction-scan Monte Carlo as training data. Both routes output a unit vector $\hat{d}$ compared to the primary direction via the opening angle $\Delta\theta = \arccos(\hat{d}\cdot\hat{d}_\mathrm{true})$; we quote $\sigma_{68}$, the 68th percentile of $\Delta\theta$.
+We implement a two-stage reconstruction pipeline on per-SiPM photon counts (18$\times$18 per face, filter-weighted detection efficiency in simulation). \textbf{Route~A (geometric)} computes brightness-weighted centroids on the top and bottom faces and defines the shower axis along their connecting chord. \textbf{Route~B (ML)} trains a gradient-boosted regressor on 20 engineered features (face photon fractions, centroid offsets, and pair asymmetries) using the direction-scan Monte Carlo as training data. Both routes output a unit vector $\hat{d}$ compared to the primary direction via the opening angle $\Delta\theta = \arccos(\hat{d}\cdot\hat{d}_\mathrm{true})$; we quote $\sigma_{68}$, the 68th percentile of $\Delta\theta$.
 
-For vertical 200~GeV $\gamma$ events Route~A achieves $\sigma_{68}\approx 0.13^\circ$ on the direction-scan campaign. For inclined incidence the top--bottom centroid chord underestimates the tilt (error $\sim\theta$); Route~B (gradient-boosted regressor on face-fraction and centroid-offset features) improves inclined response to $\sigma_{68}\approx 17^\circ$ on the present 216-event training set and will improve with larger statistics.
+For vertical incidence ($\theta=0^\circ$) Route~A achieves $\sigma_{68}\approx 0.13^\circ$ ($n=36$) on the 216-event direction-scan campaign. For inclined primaries the chord method systematically underestimates the tilt ($\sigma_{68}\approx\theta$, e.g.\ $5.1^\circ$ at $\theta=5^\circ$, $45.0^\circ$ at $\theta=45^\circ$). Route~B improves inclined response on held-out test events ($\sigma_{68}\approx 16.5^\circ$ overall, $n_\mathrm{test}=44$) but remains limited by the present training statistics; larger campaigns and direct $6\times18\times18$ map regression are planned.
 
 \subsection{Photon Counts Method and Energy Resolution}
 
@@ -491,7 +491,7 @@ Since $N_\mathrm{Ch}$ scales linearly with $E_\gamma$, the relative energy resol
 
 This relation shows that the energy resolution decreases with increasing photon energy, consistent with the theoretical expectation that statistical fluctuations dominate the resolution at lower energies. Although the number of detected photons scales linearly with energy, the relative resolution improves with higher energies due to the square-root dependence of Poisson fluctuations.
 
-As an illustrative example, the energy resolution at $E_0 = 215~\mathrm{GeV}$ was evaluated using regenerated Monte Carlo events with vertical incidence (Figure~\ref{fig:energy_resolution}). For each event we count detected photons and reconstruct $E_i = N_i / a$ with $a = 6982$~photons~GeV$^{-1}$ (filter ON) from Figure~\ref{fig:energy_calibration}. The sample standard deviation of the reconstructed energies was computed as:
+As an illustrative example, the energy resolution at $E_0 = 215~\mathrm{GeV}$ was evaluated using regenerated Monte Carlo events with vertical incidence (Figure~\ref{fig:energy_resolution}). For each event we count detected photons and reconstruct $E_i = N_i / a$ with $a = 6920$~photons~GeV$^{-1}$ (filter ON) from Figure~\ref{fig:energy_calibration}. The sample standard deviation of the reconstructed energies was computed as:
 \begin{equation}
 \sigma_E = \sqrt{\frac{1}{N-1} \sum_{i=1}^{N} \left( E_i - \bar{E} \right)^2},
 \end{equation}
@@ -499,7 +499,7 @@ where $\bar{E}$ is the mean reconstructed energy. The energy resolution is then 
 \begin{equation}
 \frac{\sigma_E}{E_0}.
 \end{equation}
-For the present dataset, $\sigma_E/E_0 \approx 0.50\%$ at 215~GeV (filter ON), consistent with Poisson-limited photon counting once shower and optical transport fluctuations are included (see Figure~\ref{fig:energy_resolution}). The overall trend of linear scaling between Cherenkov photon yield and gamma-ray energy remains valid across the examined energy range.
+For the present dataset, $\sigma_E/E_0 \approx 0.50\%$ at 215~GeV (filter ON, 40 events), consistent with Poisson-limited photon counting once shower and optical transport fluctuations are included (see Figure~\ref{fig:energy_resolution}). The overall trend of linear scaling between Cherenkov photon yield and gamma-ray energy remains valid across the examined energy range.
 
 \begin{figure}[h!]
 \centering
@@ -612,7 +612,7 @@ Figure~\ref{fig:shower-fit} presents the measured shower lengths as a function o
 \begin{equation}
 L(E) = L_\infty - c \, e^{-k E^p},
 \end{equation}
-with fitted parameters \(L_\infty = 595~\mathrm{mm}\) (90\% containment depth $L_{90}$ along the primary direction from longitudinal $dE/dz$ profiles). Measured $L_{90}$ values saturate near $\sim$600~mm for 50--500~GeV $\gamma$ rays in the 1~m cube; box-truncated events are flagged in the events ntuple.  
+with fitted parameters \(L_\infty = 666~\mathrm{mm}\) (90\% containment depth $L_{90}$ along the primary direction from longitudinal $dE/dz$ profiles). Measured $L_{90}$ values saturate near $\sim$670~mm for 50--500~GeV $\gamma$ rays in the 1~m cube; box-truncated events are flagged in the events ntuple.  
 
 The results indicate that shower length increases rapidly at low energies and gradually saturates at higher energies, approaching the theoretical geometric limit predicted by the Gamma distribution analysis. This consistency between theory and simulation provides confidence in the predicted maximum containment depth and offers a quantitative basis for optimizing calorimeter dimensions for high-energy gamma-ray measurements.
 
@@ -668,24 +668,24 @@ This derivation is entirely based on statistical photon counting and finite micr
 
 Instead of relying on analytic estimates for $dN_{\rm pe}/dx$ and $L_T(E_0)$, we directly obtain the photon yield from our Geant4 simulations. However, a critical consideration is that Cherenkov light is not uniformly distributed across the detector—it concentrates along the shower axis and forms characteristic patterns on the detector faces. 
 
-To quantify this non-uniformity, we analyzed the regenerated density maps (Figure~\ref{fig:verticaldensity}). The peak photon density on the hottest SiPM is $\sim$2.2$\times$ the array average; this factor decreases mildly with energy as showers smooth out, so it represents a conservative (high) value for the multi-TeV saturation regime. This measured peak factor enters the saturation calculation: if the average number of photons per SiPM is $\bar{N}_{\rm phot}(E_0) = N_{\rm tot}(E_0)/N_{\rm SiPM}$, then the peak SiPM receives
+To quantify this non-uniformity, we analyzed the regenerated density maps (Figure~\ref{fig:verticaldensity}). The peak photon density on the hottest SiPM is $2.07\pm 0.45\times$ the array average (30 events at 1~TeV); this factor decreases mildly with energy as showers smooth out, so it represents a conservative (high) value for the multi-TeV saturation regime. This measured peak factor enters the saturation calculation: if the average number of photons per SiPM is $\bar{N}_{\rm phot}(E_0) = N_{\rm tot}(E_0)/N_{\rm SiPM}$, then the peak SiPM receives
 \begin{equation}
-N_{\rm peak}(E_0) = 2.2 \times \bar{N}_{\rm phot}(E_0) = 2.2 \times \frac{N_{\rm tot}(E_0)}{N_{\rm SiPM}},
+N_{\rm peak}(E_0) = 2.07 \times \bar{N}_{\rm phot}(E_0) = 2.07 \times \frac{N_{\rm tot}(E_0)}{N_{\rm SiPM}},
 \end{equation}
 and saturation occurs when $N_{\rm peak}(E_{\rm sat}) \times {\rm PDE} = \mu_{\max}$. For a given $N_{\rm cell}$ and $\eta$, this yields
 \begin{equation}
-E_{\rm sat} = \frac{\mu_{\max}/{\rm PDE}}{2.2 \times (N_{\rm tot}/E)/N_{\rm SiPM}} 
-= \frac{-N_{\rm cell}\ln(1-\eta)}{{\rm PDE} \times 2.2 \times (N_{\rm tot}/E)/N_{\rm SiPM}}.
+E_{\rm sat} = \frac{\mu_{\max}/{\rm PDE}}{2.07 \times (N_{\rm tot}/E)/N_{\rm SiPM}} 
+= \frac{-N_{\rm cell}\ln(1-\eta)}{{\rm PDE} \times 2.07 \times (N_{\rm tot}/E)/N_{\rm SiPM}}.
 \end{equation}
 Since $N_{\rm SiPM} \propto N^2$ for an $N\times N$ array on each of 6 faces, the saturation energy scales quadratically with array size: $E_{\rm sat} \propto N^2$. This scaling is verified numerically and shown in Fig.~\ref{fig:saturation_vs_array}.
 
 As this is a conceptual design study, we have not yet fixed the exact SiPM array configuration. Figure~\ref{fig:saturation_vs_array} reports the baseline saturation energy for three SiPM technologies: (i)~$N_{\rm cell} = 14{,}400$; (ii)~advanced technology with $N_{\rm cell} = 100{,}000$ (10~$\mu$m pitch); and (iii)~ultimate technology with $N_{\rm cell} = 440{,}000$ (4.5~$\mu$m pitch). Because $E_{\rm sat} \propto N_{\rm cell}$ and $\propto N^2$ for an $N\times N$ per-face array, the values for any other configuration follow directly from the baseline.
 
-The baseline 18$\times$18$\times$6 configuration with current technology achieves $E_{\rm sat} \approx 1.63$~TeV for $\eta=0.2$ ($\sim$11~TeV with 100{,}000-cell and $\sim$50~TeV with 440{,}000-cell SiPMs). Since $E_{\rm sat} \propto N^2$, scaling to a 40$\times$40$\times$6 array (9,600~SiPMs) with the same 14,400-cell devices raises $E_{\rm sat}$ to $\sim$8~TeV, while combining this array size with ultimate-technology SiPMs (440,000~cells) extends the range to $\sim$240~TeV—approaching the performance of ground-based imaging air Cherenkov telescopes. With ultimate SiPM technology the readout saturation limit can thus be pushed toward the hundred-TeV level, which approaches but remains below the geometric containment limit ($\sim$671~TeV) established in the previous section. The choice of SiPM technology and array density thus represents a key trade-off between cost, data rate, and accessible energy range.
+The baseline 18$\times$18$\times$6 configuration with current technology achieves $E_{\rm sat} \approx 1.75$~TeV for $\eta=0.2$ ($\sim$12~TeV with 100{,}000-cell and $\sim$53~TeV with 440{,}000-cell SiPMs). Since $E_{\rm sat} \propto N^2$, scaling to a 40$\times$40$\times$6 array (9,600~SiPMs) with the same 14,400-cell devices raises $E_{\rm sat}$ to $\sim$8~TeV, while combining this array size with ultimate-technology SiPMs (440,000~cells) extends the range to $\sim$240~TeV—approaching the performance of ground-based imaging air Cherenkov telescopes. With ultimate SiPM technology the readout saturation limit can thus be pushed toward the hundred-TeV level, which approaches but remains below the geometric containment limit ($\sim$671~TeV) established in the previous section. The choice of SiPM technology and array density thus represents a key trade-off between cost, data rate, and accessible energy range.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.85\linewidth]{saturation_energy.png}
-\caption{SiPM saturation energy for the baseline 18$\times$18$\times$6 array using regenerated calibration ($6982$~photons~GeV$^{-1}$ filter ON), peak factor $\sim$2.2$\times$, PDE~$=0.25$, and $\eta=0.2$, for three microcell densities.}
+\caption{SiPM saturation energy for the baseline 18$\times$18$\times$6 array using regenerated calibration ($6920$~photons~GeV$^{-1}$ filter ON), peak factor $2.07\times$, PDE~$=0.25$, and $\eta=0.2$, for three microcell densities.}
 \label{fig:saturation_vs_array}
 \end{figure}
 
@@ -706,7 +706,7 @@ This design provides high charged-particle rejection efficiency without sacrific
 
 \subsection{Effective Area}
 
-The geometric effective area $A_\mathrm{eff}$ for normally incident $\gamma$ rays is estimated from a plane-source Monte Carlo (1.6$\times$1.6~m$^2$ throw area, 200~GeV, 1000 primaries). Interacting events are identified by LXe energy deposition above threshold; $A_\mathrm{eff} = (N_\mathrm{int}/N_\mathrm{throw})\,A_\mathrm{throw} \approx 0.9$~m$^2$ (Figure~\ref{fig:effective_area}).
+The geometric effective area $A_\mathrm{eff}$ for normally incident $\gamma$ rays is estimated from a plane-source Monte Carlo (1.6$\times$1.6~m$^2$ throw area, 200~GeV, 5064 primaries). Interacting events are identified by LXe energy deposition above threshold; $A_\mathrm{eff} = (N_\mathrm{int}/N_\mathrm{throw})\,A_\mathrm{throw} \approx 1.04$~m$^2$ ($2057/5064$ interacting, Figure~\ref{fig:effective_area}).
 
 \begin{figure}[htbp]
 \centering
@@ -719,7 +719,7 @@ The geometric effective area $A_\mathrm{eff}$ for normally incident $\gamma$ ray
 
 \subsection{Comparison with \textit{Fermi}-LAT and CTA}
 
-Table~\ref{tab:instrument_compare} summarizes how the simulated LXe Cherenkov concept compares with operating facilities. The cubic geometry provides nearly $4\pi$ acceptance within the LXe volume, while space-borne \textit{Fermi}-LAT maintains a wide survey FoV ($\sim 2.4$~sr) but pair-track angular resolution degrades below $\sim 0.1^\circ$ at 10~GeV and its calorimeter depth limits containment above a few hundred GeV \cite{Atwood2009,Ackermann2012}. Ground-based CTA achieves superior angular resolution ($\sim 0.05^\circ$) and TeV sensitivity but with narrow FoV and $< 15\%$ duty cycle \cite{CTAO_performance_2025}. The simulation demonstrates that photon-counting energy resolution at 215~GeV approaches the Poisson limit ($\lesssim 1\%$), competitive with \textit{Fermi}-LAT above 1~GeV and advantageous relative to IACT energy resolution, while readout saturation presently caps reliable event energy near 1.6~TeV for baseline SiPMs.
+Table~\ref{tab:instrument_compare} summarizes how the simulated LXe Cherenkov concept compares with operating facilities. The cubic geometry provides nearly $4\pi$ acceptance within the LXe volume, while space-borne \textit{Fermi}-LAT maintains a wide survey FoV ($\sim 2.4$~sr) but pair-track angular resolution degrades below $\sim 0.1^\circ$ at 10~GeV and its calorimeter depth limits containment above a few hundred GeV \cite{Atwood2009,Ackermann2012}. Ground-based CTA achieves superior angular resolution ($\sim 0.05^\circ$) and TeV sensitivity but with narrow FoV and $< 15\%$ duty cycle \cite{CTAO_performance_2025}. The simulation demonstrates that photon-counting energy resolution at 215~GeV approaches the Poisson limit ($\lesssim 1\%$), competitive with \textit{Fermi}-LAT above 1~GeV and advantageous relative to IACT energy resolution, while readout saturation presently caps reliable event energy near 1.75~TeV for baseline SiPMs.
 
 \begin{table}[htbp]
 \centering
@@ -729,7 +729,7 @@ Table~\ref{tab:instrument_compare} summarizes how the simulated LXe Cherenkov co
 \toprule
 Metric & \textit{Fermi}-LAT & CTA & LXe concept (sim.) \\
 \midrule
-Energy range & 20~MeV--300~GeV & 20~GeV--300~TeV & 50~GeV--1.6~TeV$^{\rm a}$ \\
+Energy range & 20~MeV--300~GeV & 20~GeV--300~TeV & 50~GeV--1.75~TeV$^{\rm a}$ \\
 $\sigma_E/E$ @ 215~GeV & $\sim 9\%$ @ 1~GeV & moderate & $\sim 0.50\%$ \\
 Angular resolution & $\sim 0.6^\circ$ @ 1~GeV & $\sim 0.05^\circ$ & $\sigma_{68}\approx 0.13^\circ$ vertical (Route~A) \\
 FoV / acceptance & 2.4~sr survey & $\sim 10$~deg & $\lesssim 1~{\rm m}^3$ cube \\
@@ -768,7 +768,7 @@ Overall, this design philosophy balances the need for functional integration wit
 
 \section{Conclusion}
 
-We report a reproducible Geant4~11.3.2 simulation of a 1~m$^3$ liquid-xenon Cherenkov telescope with 1{,}944 interior SiPMs. The regenerated pipeline yields $9781$ detected photons per GeV (filter OFF), $6982$ per GeV (filter ON), $\sigma_E/E \approx 0.50\%$ at 215~GeV, a filter transmission of $\sim 71\%$, and a SiPM peak factor of $\sim$2.2$\times$, implying $E_{\rm sat}\approx 1.63$~TeV for baseline 14{,}400-cell devices. Route~A geometric reconstruction achieves $\sigma_{68}\approx 0.13^\circ$ for vertical incidence. These self-consistent numbers replace earlier draft metrics that could not be reproduced from the archived code.
+We report a reproducible Geant4~11.3.2 simulation of a 1~m$^3$ liquid-xenon Cherenkov telescope with 1{,}944 interior SiPMs. The regenerated pipeline yields $9683$ detected photons per GeV (filter OFF), $6920$ per GeV (filter ON), $\sigma_E/E \approx 0.50\%$ at 215~GeV, a filter transmission of $\sim 71\%$, and a SiPM peak factor of $2.07\pm 0.45\times$, implying $E_{\rm sat}\approx 1.75$~TeV for baseline 14{,}400-cell devices. Route~A geometric reconstruction achieves $\sigma_{68}\approx 0.13^\circ$ for vertical incidence; effective area at 200~GeV is $\approx 1.04$~m$^2$. These self-consistent numbers replace earlier draft metrics that could not be reproduced from the archived code.
 
 \begin{acknowledgments}
 The authors acknowledge that this work originated from the Johns Hopkins University Summer Program, where the concept of the proposed liquid xenon Cherenkov telescope was first formulated. We are sincerely grateful to Dr. Kelly Lepo (Space Telescope Science Institute) and Mr. Joshua Lake (Pomfret School) for their expert advice and support. We also thank the development teams of MATLAB, Geant4, ParaView, and Cursor for providing essential tools used in this study.

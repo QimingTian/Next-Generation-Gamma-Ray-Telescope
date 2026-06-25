@@ -4,6 +4,7 @@
 #include "OpticalMaterials.hh"
 #include "RuntimeConfig.hh"
 #include "SiPMSD.hh"
+#include "ACDSD.hh"
 
 #include <cstring>
 
@@ -38,7 +39,32 @@ void PlaceSiPMArray(G4LogicalVolume* parent, G4ThreeVector faceCenter, G4ThreeVe
     }
   }
 }
+
+G4bool AcdEnabledFromEnv()
+{
+  const char* env = std::getenv("G4ACD");
+  if (!env) return true;
+  return !(std::strcmp(env, "0") == 0 || std::strcmp(env, "off") == 0 ||
+           std::strcmp(env, "OFF") == 0 || std::strcmp(env, "false") == 0);
+}
+
+void PlaceACDFace(G4LogicalVolume* parent, G4ThreeVector faceCenter, G4ThreeVector uDir,
+                  G4ThreeVector vDir, G4LogicalVolume* logicTile, G4RotationMatrix* rotation,
+                  G4int& copyNoBase, G4int gridSize)
+{
+  const G4double spacing = 60.0 * mm;
+  for (int i = 0; i < gridSize; ++i) {
+    for (int j = 0; j < gridSize; ++j) {
+      const G4double offsetU = (i - (gridSize - 1) / 2.0) * spacing;
+      const G4double offsetV = (j - (gridSize - 1) / 2.0) * spacing;
+      const G4ThreeVector pos = faceCenter + offsetU * uDir + offsetV * vDir;
+      new G4PVPlacement(rotation, pos, logicTile, "ACDTile", parent, false, copyNoBase++, false);
+    }
+  }
+}
 }  // namespace
+
+G4bool DetectorConstruction::ACDEnabled() { return AcdEnabledFromEnv(); }
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
@@ -106,6 +132,34 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   PlaceSiPMArray(logicLXe, {0, -half + offset, 0}, {1, 0, 0}, {0, 0, 1}, kSiPMGridSize,
                  kSiPMGridSize, fLogicSiPM, rotNegY, copyNo);
 
+  if (ACDEnabled()) {
+    auto* acd_mat = nist->FindOrBuildMaterial("G4_PLASTIC_SC_VINYLTOLUENE");
+    const G4double acd_thickness = 10.0 * mm;
+    const G4double acd_tile = 58.0 * mm;
+    const G4double shell_half = 0.5 * telescope_size;
+    const G4double acd_gap = 2.0 * mm;
+    const G4double acd_offset = shell_half + acd_gap + 0.5 * acd_thickness;
+
+    auto* solidACD =
+      new G4Box("ACDTileSolid", 0.5 * acd_tile, 0.5 * acd_tile, 0.5 * acd_thickness);
+    fLogicACDTile = new G4LogicalVolume(solidACD, acd_mat, "ACDTile");
+    fLogicACDTile->SetVisAttributes(new G4VisAttributes(G4Colour(0.0, 1.0, 0.0, 0.35)));
+
+    G4int acdCopy = 0;
+    PlaceACDFace(logicWorld, {0, 0, +acd_offset}, {1, 0, 0}, {0, 1, 0}, fLogicACDTile, nullptr,
+                 acdCopy, kACDGridSize);
+    PlaceACDFace(logicWorld, {0, 0, -acd_offset}, {1, 0, 0}, {0, -1, 0}, fLogicACDTile, nullptr,
+                 acdCopy, kACDGridSize);
+    PlaceACDFace(logicWorld, {+acd_offset, 0, 0}, {0, 1, 0}, {0, 0, -1}, fLogicACDTile, rotPosX,
+                 acdCopy, kACDGridSize);
+    PlaceACDFace(logicWorld, {-acd_offset, 0, 0}, {0, 1, 0}, {0, 0, 1}, fLogicACDTile, rotNegX,
+                 acdCopy, kACDGridSize);
+    PlaceACDFace(logicWorld, {0, +acd_offset, 0}, {1, 0, 0}, {0, 0, -1}, fLogicACDTile, rotPosY,
+                 acdCopy, kACDGridSize);
+    PlaceACDFace(logicWorld, {0, -acd_offset, 0}, {1, 0, 0}, {0, 0, 1}, fLogicACDTile, rotNegY,
+                 acdCopy, kACDGridSize);
+  }
+
   logicShell->SetVisAttributes(new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, 0.2)));
   logicLXe->SetVisAttributes(new G4VisAttributes(G4Colour(0.0, 1.0, 1.0, 0.3)));
   fLogicSiPM->SetVisAttributes(new G4VisAttributes(G4Colour(1.0, 0.0, 0.0)));
@@ -116,10 +170,16 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 void DetectorConstruction::ConstructSDandField()
 {
-  if (!fLogicSiPM) return;
-  auto* sipmSD = new SiPMSD("SiPMSD");
-  G4SDManager::GetSDMpointer()->AddNewDetector(sipmSD);
-  fLogicSiPM->SetSensitiveDetector(sipmSD);
+  if (fLogicSiPM) {
+    auto* sipmSD = new SiPMSD("SiPMSD");
+    G4SDManager::GetSDMpointer()->AddNewDetector(sipmSD);
+    fLogicSiPM->SetSensitiveDetector(sipmSD);
+  }
+  if (fLogicACDTile) {
+    auto* acdSD = new ACDSD("ACDSD");
+    G4SDManager::GetSDMpointer()->AddNewDetector(acdSD);
+    fLogicACDTile->SetSensitiveDetector(acdSD);
+  }
 }
 
 void DetectorConstruction::SetupOpticalSurfaces(G4Material* /*shell_mat*/,

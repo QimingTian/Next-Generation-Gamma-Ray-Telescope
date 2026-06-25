@@ -1,0 +1,9 @@
+acd_gamma_100GeV|gamma_E100GeV.mac|on|em
+acd_gamma_300GeV|gamma_E300GeV.mac|on|em
+acd_gamma_500GeV|gamma_E500GeV.mac|on|em
+acd_gamma_100_theta15|gamma_100GeV_theta15deg.mac|on|em
+acd_gamma_100_theta30|gamma_100GeV_theta30deg.mac|on|em
+acd_gamma_100_theta45|gamma_100GeV_theta45deg.mac|on|em
+acd_proton_100GeV|proton_E100GeV.mac|on|hadronic
+acd_proton_300GeV|proton_E300GeV.mac|on|hadronic
+acd_proton_1000GeV|proton_E1000GeV.mac|on|hadronic

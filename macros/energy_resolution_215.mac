@@ -6,5 +6,5 @@
 /gps/pos/centre 0 0 60 cm
 /gps/ang/type beam1d
 /gps/direction 0 0 -1
-/run/beamOn 40
+/run/beamOn 60
 

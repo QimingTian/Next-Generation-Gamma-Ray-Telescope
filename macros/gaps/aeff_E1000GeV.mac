@@ -1,0 +1,12 @@
+/run/initialize
+
+/gps/particle gamma
+/gps/energy 1000 GeV
+/gps/pos/type Plane
+/gps/pos/shape Square
+/gps/pos/halfx 80 cm
+/gps/pos/halfy 80 cm
+/gps/pos/centre 0 0 60 cm
+/gps/ang/type beam1d
+/gps/direction 0 0 -1
+/run/beamOn 1200
