@@ -36,7 +36,7 @@ export G4MT=0 G4WRITE_PHOTONS=0 G4ACD=on
 
 if [ -f deps/geant4-install/bin/geant4.sh ]; then
   (cd build && cmake .. -DWITH_GEANT4_UIVIS=OFF -DWITH_HADRONIC=OFF && cmake --build . -j"$(nproc)")
-  (cd build-hadronic && cmake .. -DWITH_GEANT4_UIVIS=OFF -DWITH_HADRONIC=ON && cmake --build . -j"$(nproc)" MainHad)
+  (cd build-hadronic && cmake .. -DWITH_GEANT4_UIVIS=OFF -DWITH_HADRONIC=ON && cmake --build . -j"$(nproc)" --target MainHad)
   echo "Build OK: build/Main, build-hadronic/MainHad"
 else
   echo "Skipped Geant4 build — upload deps first."
