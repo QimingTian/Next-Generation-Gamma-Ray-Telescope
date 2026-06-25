@@ -60,19 +60,13 @@ case "$MODE" in
     done | run_pool
     ;;
   phase2)
-    python3 "$ROOT/scripts/generate_direction_scan.py" --events 500
-    # Parallel shards: one macro per run file in macros/parallel if generated
-    if [ -d "$ROOT/macros/parallel" ]; then
-      idx=0
-      for mac in "$ROOT/macros/parallel"/*.mac; do
-        idx=$((idx + 1))
-        base=$(basename "$mac" .mac)
-        echo "aeff_phase2_${base}|parallel/${base}.mac|0"
-      done | run_pool
-    else
-      echo "Run: python3 scripts/generate_direction_scan.py with shard generator first" >&2
-      exit 1
-    fi
+    export G4ACD=off
+    export G4WRITE_PHOTONS=0
+    python3 "$ROOT/scripts/generate_direction_scan.py" \
+      --cloud-shard --events-per-bin 500 --subshards 4 --n-phi 24
+    grep '|em$' "$ROOT/macros/phase2/cloud_manifest.txt" | while IFS='|' read -r tag macro _ _; do
+      echo "${tag}|${macro}|0"
+    done | run_pool
     ;;
   acd)
     python3 "$ROOT/scripts/generate_acd_campaign.py"
