@@ -19,12 +19,15 @@ echo "=== MaxCloud campaign $MODE $(date) ncpu=$NCPU ==="
 
 run_shard() {
   local tag="$1" macro="$2" hadronic="$3" seed="$4"
+  local src="$ROOT/macros/$macro"
   if [ "$hadronic" = 1 ]; then
-    cp -f "$ROOT/macros/$macro" "$BUILD_HAD/macros/" 2>/dev/null || cp -f "$ROOT/macros/gaps/$macro" "$BUILD_HAD/macros/gaps/"
+    mkdir -p "$BUILD_HAD/macros/$(dirname "$macro")"
+    cp -f "$src" "$BUILD_HAD/macros/$macro"
     (cd "$BUILD_HAD" && G4OUTPUT_TAG="$tag" G4SEED="$seed" ./MainHad "macros/$macro")
     cp -f "$BUILD_HAD/data/${tag}_"* "$DATA/" 2>/dev/null || true
   else
-    cp -f "$ROOT/macros/$macro" "$BUILD/macros/" 2>/dev/null || cp -f "$ROOT/macros/acd/$macro" "$BUILD/macros/acd/"
+    mkdir -p "$BUILD/macros/$(dirname "$macro")"
+    cp -f "$src" "$BUILD/macros/$macro"
     (cd "$BUILD" && G4OUTPUT_TAG="$tag" G4SEED="$seed" ./Main "macros/$macro")
     cp -f "$BUILD/data/${tag}_"* "$DATA/" 2>/dev/null || true
   fi
