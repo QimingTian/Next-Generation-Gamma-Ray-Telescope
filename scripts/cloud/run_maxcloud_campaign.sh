@@ -11,6 +11,8 @@ LOG="$DATA/maxcloud_${MODE}.log"
 
 source "$ROOT/setup_env.sh"
 export G4MT=0 G4WRITE_PHOTONS=0 G4ACD=on G4SEED="${G4SEED:-525252}"
+# Serial shards: thread env from setup_env.sh triggers optical segfault on Linux.
+unset G4FORCENUMBEROFTHREADS G4NUM_THREADS
 
 mkdir -p "$DATA" "$BUILD/data" "$BUILD_HAD/data"
 exec > >(tee -a "$LOG") 2>&1
