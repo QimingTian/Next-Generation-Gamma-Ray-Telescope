@@ -162,6 +162,13 @@ def main() -> None:
         total_target = p2["events_target"]
         campaign_done = p2["campaign_done"]
         tail = log_tail("phase2")
+    elif campaign == "gaps_e1000":
+        e1000 = next(x for x in gaps["energies"] if x["energy_GeV"] == 1000)
+        total_pct = e1000["pct"]
+        total_events = e1000["events_done"]
+        total_target = e1000["events_target"]
+        campaign_done = e1000["events_done"] >= 1200
+        tail = log_tail("gaps_e1000")
     else:
         total_pct = gaps["total_pct"]
         total_events = gaps["total_events"]

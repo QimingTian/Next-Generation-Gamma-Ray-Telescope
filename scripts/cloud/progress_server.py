@@ -158,10 +158,11 @@ async function refresh() {
     const c = d.cloud;
     const camp = c.campaign || 'gaps';
     const label = document.getElementById('campaign-label');
-    label.textContent = camp;
-    label.className = 'pill ' + (camp.startsWith('phase2') ? 'ok' : (camp === 'gaps' ? 'wait' : 'ok'));
+    label.textContent = camp === 'gaps_e1000' ? 'gaps E1000 补跑' : camp;
+    label.className = 'pill ' + (camp.startsWith('phase2') ? 'ok' : 'wait');
 
     document.getElementById('overall-title').textContent =
+      camp === 'gaps_e1000' ? 'E1000 A_eff 补跑' :
       camp.startsWith('phase2') ? 'Phase 2 overall' : 'Gaps overall';
 
     document.getElementById('total-pct').textContent = c.total_pct + '%';
