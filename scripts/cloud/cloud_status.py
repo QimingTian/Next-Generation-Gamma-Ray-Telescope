@@ -89,15 +89,24 @@ def active_campaign() -> str:
                 return "gaps"
         except OSError:
             pass
-    # Heuristic: running Main on phase2 macros
+    # Heuristic: running Main macro path beats stale log files
     try:
         out = subprocess.check_output(["pgrep", "-a", "Main"], text=True, stderr=subprocess.DEVNULL)
+        if "gaps/" in out:
+            if "1000GeV" in out or "E1000" in out:
+                return "gaps_e1000"
+            return "gaps"
         if "phase2/" in out:
             return "phase2"
-        if "gaps/" in out:
-            return "gaps"
     except (subprocess.CalledProcessError, OSError):
         pass
+    if (DATA / "maxcloud_gaps_e1000.log").is_file():
+        try:
+            text = (DATA / "maxcloud_gaps_e1000.log").read_text(errors="replace")
+            if "=== MaxCloud campaign gaps_e1000" in text and "=== Done gaps_e1000" not in text:
+                return "gaps_e1000"
+        except OSError:
+            pass
     return "idle"
 
 
