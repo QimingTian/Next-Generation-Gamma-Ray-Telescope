@@ -52,6 +52,7 @@ run_pool() {
 
 case "$MODE" in
   gaps)
+    export G4ACD=off  # ACD geometry segfaults on Linux; not needed for A_eff(E)
     python3 "$ROOT/scripts/generate_gaps_campaign.py" --aeff-energy-events 1200 --aeff-theta-events 600 --proton-events 50
     run_pool <<EOF
 aeff_energy_500GeV|gaps/aeff_E500GeV.mac|0
