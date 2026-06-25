@@ -10,7 +10,8 @@ pkill -f run_maxcloud_pipeline 2>/dev/null || true
 pkill -f "run_maxcloud_campaign.sh phase2" 2>/dev/null || true
 sleep 2
 cd /root/GammaRayTelescope
-git pull -q
+git fetch -q origin
+git reset -q --hard origin/main
 chmod +x scripts/cloud/*.sh scripts/cloud/*.py
 nohup bash scripts/cloud/run_maxcloud_campaign.sh gaps_e1000 \
   > data/maxcloud_gaps_e1000_nohup.log 2>&1 &

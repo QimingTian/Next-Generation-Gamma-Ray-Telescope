@@ -73,23 +73,7 @@ def phase2_progress() -> dict:
 
 
 def active_campaign() -> str:
-    if (DATA / "maxcloud_phase2.log").is_file():
-        try:
-            text = (DATA / "maxcloud_phase2.log").read_text(errors="replace")
-            if "=== MaxCloud campaign phase2" in text and "=== Done phase2" not in text:
-                return "phase2"
-            if "=== Done phase2" in text:
-                return "phase2_done"
-        except OSError:
-            pass
-    if (DATA / "maxcloud_gaps.log").is_file():
-        try:
-            text = (DATA / "maxcloud_gaps.log").read_text(errors="replace")
-            if "=== Done gaps" not in text and "=== MaxCloud campaign gaps" in text:
-                return "gaps"
-        except OSError:
-            pass
-    # Heuristic: running Main macro path beats stale log files
+    # Live processes beat stale log files (phase2 log lingers after manual stop).
     try:
         out = subprocess.check_output(["pgrep", "-a", "Main"], text=True, stderr=subprocess.DEVNULL)
         if "gaps/" in out:
@@ -105,6 +89,22 @@ def active_campaign() -> str:
             text = (DATA / "maxcloud_gaps_e1000.log").read_text(errors="replace")
             if "=== MaxCloud campaign gaps_e1000" in text and "=== Done gaps_e1000" not in text:
                 return "gaps_e1000"
+        except OSError:
+            pass
+    if (DATA / "maxcloud_phase2.log").is_file():
+        try:
+            text = (DATA / "maxcloud_phase2.log").read_text(errors="replace")
+            if "=== MaxCloud campaign phase2" in text and "=== Done phase2" not in text:
+                return "phase2"
+            if "=== Done phase2" in text:
+                return "phase2_done"
+        except OSError:
+            pass
+    if (DATA / "maxcloud_gaps.log").is_file():
+        try:
+            text = (DATA / "maxcloud_gaps.log").read_text(errors="replace")
+            if "=== Done gaps" not in text and "=== MaxCloud campaign gaps" in text:
+                return "gaps"
         except OSError:
             pass
     return "idle"
