@@ -60,15 +60,49 @@ def proton_vertical(energy: float, events: int) -> list[str]:
     ]
 
 
+def write_sharded_energy(energy: float, total_events: int, n_shards: int, manifest: list[str]) -> None:
+    """Split total_events across n_shards macros for parallel serial Geant4 jobs."""
+    base, rem = divmod(total_events, n_shards)
+    for i in range(n_shards):
+        events = base + (1 if i < rem else 0)
+        name = f"aeff_E{energy:g}GeV_shard{i:03d}.mac"
+        lines = header() + gamma_plane_vertical(energy, events)
+        (OUT / name).write_text("\n".join(lines))
+        tag = f"aeff_energy_{energy:g}GeV_shard{i:03d}"
+        manifest.append(f"{tag}|{name}|on|em")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--aeff-energy-events", type=int, default=1200)
     parser.add_argument("--aeff-theta-events", type=int, default=600)
     parser.add_argument("--proton-events", type=int, default=50)
+    parser.add_argument(
+        "--cloud-shard",
+        action="store_true",
+        help="Generate sharded E500/E1000 macros for 128-way parallel cloud runs",
+    )
+    parser.add_argument("--shard-count", type=int, default=128)
+    parser.add_argument(
+        "--cloud-energies",
+        type=float,
+        nargs="+",
+        default=[500, 1000],
+        help="Energies to shard in --cloud-shard mode",
+    )
     args = parser.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
     manifest: list[str] = []
+
+    if args.cloud_shard:
+        for e in args.cloud_energies:
+            write_sharded_energy(e, args.aeff_energy_events, args.shard_count, manifest)
+        (OUT / "cloud_manifest.txt").write_text("\n".join(manifest) + "\n")
+        n = len(manifest)
+        print(f"Wrote {n} sharded jobs to {OUT} ({args.shard_count} shards × {len(args.cloud_energies)} energies)")
+        print(f"Events per energy: {args.aeff_energy_events}, total primaries: {n * (args.aeff_energy_events // args.shard_count)}+")
+        return
 
     for e in (100, 300, 500, 1000):
         name = f"aeff_E{e:g}GeV.mac"

@@ -53,11 +53,11 @@ run_pool() {
 case "$MODE" in
   gaps)
     export G4ACD=off  # ACD geometry segfaults on Linux; not needed for A_eff(E)
-    python3 "$ROOT/scripts/generate_gaps_campaign.py" --aeff-energy-events 1200 --aeff-theta-events 600 --proton-events 50
-    run_pool <<EOF
-aeff_energy_500GeV|gaps/aeff_E500GeV.mac|0
-aeff_energy_1000GeV|gaps/aeff_E1000GeV.mac|0
-EOF
+    python3 "$ROOT/scripts/generate_gaps_campaign.py" \
+      --cloud-shard --shard-count "$NCPU" --aeff-energy-events 1200
+    grep '|em$' "$ROOT/macros/gaps/cloud_manifest.txt" | while IFS='|' read -r tag macro _ _; do
+      echo "${tag}|gaps/${macro}|0"
+    done | run_pool
     ;;
   phase2)
     python3 "$ROOT/scripts/generate_direction_scan.py" --events 500

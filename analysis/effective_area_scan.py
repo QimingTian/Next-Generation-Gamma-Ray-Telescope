@@ -17,7 +17,7 @@ EDEP_THRESHOLD_MEV = 1.0
 
 
 def aeff_from_tag(data_dir: Path, tag_prefix: str) -> dict | None:
-    files = sorted(data_dir.glob(f"{tag_prefix}_run*_nt_events.csv"))
+    files = sorted(data_dir.glob(f"{tag_prefix}*_run*_nt_events.csv"))
     if not files:
         return None
     events = pd.concat([parse_geant4_csv(f) for f in files], ignore_index=True)
