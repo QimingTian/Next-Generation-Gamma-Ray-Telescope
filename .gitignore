@@ -13,6 +13,7 @@ data/keep_awake.log
 data/*.log
 figures/*
 !figures/.gitkeep
+!data/gaps_events.tar.gz
 analysis/output/
 *.csv
 .DS_Store
