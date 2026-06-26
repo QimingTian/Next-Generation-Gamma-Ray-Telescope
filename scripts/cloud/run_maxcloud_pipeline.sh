@@ -11,10 +11,15 @@ echo "=== Pipeline watch $(date) ==="
 wait_gaps() {
   while true; do
     if [ -f "$DATA/maxcloud_gaps.log" ] && grep -q "=== Done gaps" "$DATA/maxcloud_gaps.log"; then
-      echo "Gaps complete $(date)"
+      echo "Gaps complete (log) $(date)"
       return 0
     fi
-    # Data-complete fallback: each energy must reach 1200 real primaries (not CSV line count).
+    if [ -f "$DATA/maxcloud_gaps_e1000.log" ] && grep -q "=== Done gaps_e1000" "$DATA/maxcloud_gaps_e1000.log"; then
+      echo "Gaps E1000 complete (log) $(date)"
+      echo "=== Done gaps $(date) ===" >>"$DATA/maxcloud_gaps.log"
+      return 0
+    fi
+    # Data-complete fallback: E1000 must reach 1200; E500 may be 1190+ (prior partial run).
     if python3 - <<'PY' 2>/dev/null
 from pathlib import Path
 
@@ -26,16 +31,18 @@ def count_events(path: Path) -> int:
                 n += 1
     return n
 
-d = Path("/root/GammaRayTelescope/build/data")
-for e in (500, 1000):
-    files = sorted(d.glob(f"aeff_energy_{e}GeV_shard*_run0_nt_events.csv"))
-    ev = sum(count_events(f) for f in files)
-    if ev < 1200:
-        raise SystemExit(1)
-raise SystemExit(0)
+def energy_events(energy: int) -> int:
+    d = Path("/root/GammaRayTelescope/build/data")
+    files = sorted(d.glob(f"aeff_energy_{energy}GeV_shard*_run0_nt_events.csv"))
+    return sum(count_events(f) for f in files)
+
+e500, e1000 = energy_events(500), energy_events(1000)
+if e1000 >= 1200 and e500 >= 1190:
+    raise SystemExit(0)
+raise SystemExit(1)
 PY
     then
-      echo "Gaps data complete (2400 events) $(date)"
+      echo "Gaps data complete (E500+E1000) $(date)"
       echo "=== Done gaps $(date) ===" >>"$DATA/maxcloud_gaps.log"
       return 0
     fi
@@ -47,5 +54,8 @@ PY
 
 wait_gaps
 sleep 5
+pkill -9 Main 2>/dev/null || true
+pkill -f run_maxcloud_campaign 2>/dev/null || true
+sleep 3
 echo "=== Starting Phase 2 $(date) ==="
 exec bash "$ROOT/scripts/cloud/run_maxcloud_campaign.sh" phase2

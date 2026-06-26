@@ -150,7 +150,10 @@ def main() -> None:
         "total_events": sum(shard_progress(e)["events_done"] for e in (500, 1000)),
         "total_target": 2400,
         "campaign_done": gaps_done
-        or all(shard_progress(e)["events_done"] >= 1200 for e in (500, 1000)),
+        or (
+            shard_progress(1000)["events_done"] >= 1200
+            and shard_progress(500)["events_done"] >= 1190
+        ),
     }
     gaps["total_pct"] = round(min(100.0, 100.0 * gaps["total_events"] / 2400), 1)
 

@@ -35,6 +35,35 @@ run_shard() {
   fi
 }
 
+count_csv_events() {
+  python3 - "$1" <<'PY'
+import sys
+from pathlib import Path
+p = Path(sys.argv[1])
+if not p.is_file():
+    print(0)
+    raise SystemExit(0)
+n = sum(1 for ln in p.read_text().splitlines() if ln.strip() and not ln.lstrip().startswith("#"))
+print(n)
+PY
+}
+
+shard_complete() {
+  local tag="$1" need="$2" f n
+  for f in "$BUILD/data/${tag}_"*"_nt_events.csv" "$DATA/${tag}_"*"_nt_events.csv"; do
+    [ -f "$f" ] || continue
+    n="$(count_csv_events "$f")"
+    if [ "$n" -ge "$need" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+expected_beam() {
+  grep '/run/beamOn' "$ROOT/macros/$1" | awk '{print $2}'
+}
+
 run_pool() {
   local -a jobs=()
   local idx=0
@@ -48,6 +77,28 @@ run_pool() {
     run_shard "$tag" "$macro" "$had" $((G4SEED + idx)) &
   done
   wait
+}
+
+run_pool_skip_complete() {
+  local idx=0 skipped=0
+  while IFS='|' read -r tag macro had; do
+    [ -z "$tag" ] && continue
+    local need
+    need="$(expected_beam "$macro")"
+    if shard_complete "$tag" "$need"; then
+      echo ">> skip $tag ($need events)"
+      skipped=$((skipped + 1))
+      continue
+    fi
+    idx=$((idx + 1))
+    while [ "$(jobs -rp | wc -l | tr -d ' ')" -ge "$NCPU" ]; do
+      wait -n 2>/dev/null || sleep 1
+    done
+    echo ">> $tag $macro"
+    run_shard "$tag" "$macro" "$had" $((G4SEED + idx)) &
+  done
+  wait
+  echo "Skipped $skipped complete shards"
 }
 
 case "$MODE" in
@@ -72,7 +123,7 @@ case "$MODE" in
       --cloud-shard --events-per-bin 500 --subshards 4 --n-phi 24
     grep '|em$' "$ROOT/macros/phase2/cloud_manifest.txt" | while IFS='|' read -r tag macro _ _; do
       echo "${tag}|${macro}|0"
-    done | run_pool
+    done | run_pool_skip_complete
     ;;
   acd)
     python3 "$ROOT/scripts/generate_acd_campaign.py"
