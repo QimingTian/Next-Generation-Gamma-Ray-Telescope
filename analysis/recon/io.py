@@ -39,9 +39,57 @@ def load_runs(data_dir: Path, tag: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Load all runs for a tag; offset EventIDs; attach run_index column."""
     summary_files = sorted(data_dir.glob(f"{tag}_run*_nt_sipm_summary.csv"))
     event_files = sorted(data_dir.glob(f"{tag}_run*_nt_events.csv"))
-    if not summary_files:
-        raise FileNotFoundError(f"No sipm_summary for tag {tag} in {data_dir}")
+    if summary_files:
+        return _merge_run_pairs(summary_files, event_files, tag)
 
+    # Phase 2 cloud shards: direction_scan_E{E}_t{θ}_p{φ}_s{shard}_run0_nt_*.csv
+    if tag == "direction_scan":
+        phase2 = load_phase2_shards(data_dir)
+        if phase2 is not None:
+            return phase2
+
+    raise FileNotFoundError(f"No sipm_summary for tag {tag} in {data_dir}")
+
+
+def load_phase2_shards(
+    data_dir: Path, energy_gev: float | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame] | None:
+    """Load Phase 2 sharded direction_scan CSVs; truth from events DirX/Y/Z."""
+    if energy_gev is not None:
+        glob_pat = f"direction_scan_E{energy_gev:g}_*_run*_nt_sipm_summary.csv"
+    else:
+        glob_pat = "direction_scan_E*_t*_p*_s*_run*_nt_sipm_summary.csv"
+    summary_files = sorted(data_dir.glob(glob_pat))
+    if not summary_files:
+        return None
+
+    event_files = []
+    for sf in summary_files:
+        ef = Path(str(sf).replace("_nt_sipm_summary.csv", "_nt_events.csv"))
+        if not ef.is_file():
+            raise FileNotFoundError(f"Missing events CSV for {sf.name}")
+        event_files.append(ef)
+
+    summaries, events = [], []
+    offset = 0
+    for sf, ef in zip(summary_files, event_files):
+        s = parse_geant4_csv(sf)
+        e = parse_geant4_csv(ef)
+        if offset > 0:
+            s = s.copy()
+            e = e.copy()
+            s["EventID"] = s["EventID"] + offset
+            e["EventID"] = e["EventID"] + offset
+        summaries.append(s)
+        events.append(e)
+        offset += int(max(s["EventID"].max(), e["EventID"].max(), 0)) + 1
+
+    return pd.concat(summaries, ignore_index=True), pd.concat(events, ignore_index=True)
+
+
+def _merge_run_pairs(
+    summary_files: list[Path], event_files: list[Path], tag: str
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     summaries, events = [], []
     offset = 0
     for sf, ef in zip(summary_files, event_files):

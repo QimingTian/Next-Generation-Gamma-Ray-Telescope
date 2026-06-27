@@ -31,8 +31,18 @@ def event_features(summary: pd.DataFrame, event_id: int) -> np.ndarray:
     return np.concatenate([fn.astype(np.float32), off.astype(np.float32), asym])
 
 
-def build_feature_dataset(data_dir: Path, tag: str) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
-    summary, events = load_runs(data_dir, tag)
+def build_feature_dataset(
+    data_dir: Path, tag: str, energy_gev: float | None = None
+) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
+    if energy_gev is not None:
+        from recon.io import load_phase2_shards
+
+        loaded = load_phase2_shards(data_dir, energy_gev)
+        if loaded is None:
+            raise FileNotFoundError(f"No Phase2 E={energy_gev} GeV shards in {data_dir}")
+        summary, events = loaded
+    else:
+        summary, events = load_runs(data_dir, tag)
     xs, ys, meta = [], [], []
     for eid in sorted(summary["EventID"].unique()):
         if eid not in events["EventID"].values:

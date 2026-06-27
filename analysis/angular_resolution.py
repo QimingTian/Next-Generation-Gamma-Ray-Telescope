@@ -70,13 +70,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", default="direction_scan")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
+    parser.add_argument("--energy", type=float, default=None, help="Phase2: load E=30/100/300 GeV shards only")
     parser.add_argument("--train-route-b", action="store_true")
-    args = parser.parse_args()
 
     ensure_dirs()
     data_dir = args.data_dir
     try:
-        summary, events = load_runs(data_dir, args.tag)
+        if args.energy is not None:
+            from recon.io import load_phase2_shards
+
+            loaded = load_phase2_shards(data_dir, args.energy)
+            if loaded is None:
+                raise FileNotFoundError(f"No Phase2 E={args.energy} GeV shards in {data_dir}")
+            summary, events = loaded
+        else:
+            summary, events = load_runs(data_dir, args.tag)
     except FileNotFoundError:
         summary, events = load_runs(data_dir, "angle_scan")
 
@@ -163,7 +171,7 @@ def main() -> None:
 
     route_b_summary = {}
     if args.train_route_b and len(results) >= 30:
-        X, y, meta = build_feature_dataset(data_dir, args.tag)
+        X, y, meta = build_feature_dataset(data_dir, args.tag, energy_gev=args.energy)
         y_test, y_pred, model = train_and_predict(X, y)
         deltas_b = [
             opening_angle_deg(y_pred[i], y_test[i]) for i in range(len(y_test))

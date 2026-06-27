@@ -14,6 +14,8 @@ data/*.log
 figures/*
 !figures/.gitkeep
 !data/gaps_events.tar.gz
+!data/phase2_E*_events.tar.gz
+!data/phase2_E*_events.tar.gz.part-*
 analysis/output/
 *.csv
 .DS_Store
