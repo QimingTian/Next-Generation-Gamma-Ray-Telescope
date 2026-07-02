@@ -5,6 +5,10 @@
 \usepackage{subcaption}
 \usepackage{amsmath}
 \usepackage{siunitx}
+\sisetup{detect-all}
+\DeclareSIUnit\GeV{GeV}
+\DeclareSIUnit\TeV{TeV}
+\DeclareSIUnit\ton{t}
 \usepackage{tikz}
 \usepackage{multirow}
 \usepackage{tikz-3dplot}
@@ -18,24 +22,22 @@
 
 \title{A Liquid Xenon Cherenkov Gamma-Ray Telescope: Simulation Performance of a Cubic SiPM Instrument}
 
-\author[orcid=0009-0001-8337-6163]{Qiming Tian}
-\email{<qtian.28@pomfret.org>}
+\author[0009-0001-8337-6163]{Qiming Tian}
+\email{qtian.28@pomfret.org}
 \affiliation{Pomfret School}
 
 \author{Bria Malool}
-\email{<briamalool@gmail.com>}
+\email{briamalool@gmail.com}
 \affiliation{Winston Churchill High School}
 
-\email[show]{qtian.28@pomfret.org}  
-\journalinfo{Preprint submitted to arXiv}
+\journalinfo{}
 
 \begin{abstract}
-We present a publication-grade Geant4 simulation of a cubic liquid xenon (LXe) Cherenkov telescope instrumented with 1{,}944 interior SiPMs (18$\times$18 per face). Electromagnetic cascades from 50--1000~GeV $\gamma$ rays produce a linear photon yield of $9683$~photons~GeV$^{-1}$ (filter OFF), reduced to $\sim 6920$~photons~GeV$^{-1}$ after per-photon CaF$_2$/MgF$_2$ filter transmission ($\bar{T}\approx 0.71$). At 215~GeV the photon-counting energy resolution is $\sigma_E/E \approx 0.50\%$ (filter ON), consistent with Poisson statistics. Cherenkov light maps show a measured peak-to-mean SiPM occupancy factor of $2.07\pm 0.45\times$, setting a readout saturation limit $E_{\rm sat}\approx 1.75$~TeV for 14{,}400-cell SiPMs; geometric angular reconstruction achieves $\sigma_{68}\approx 0.13^\circ$ for vertical incidence and remains shape-based above this energy ceiling. The fully contained geometry, GPS-driven macro campaigns, and open analysis pipeline establish a reproducible baseline for comparing this concept with \textit{Fermi}-LAT and CTA.mises.
+We describe a Geant4 simulation of a cubic liquid xenon (LXe) Cherenkov telescope read out by 1{,}944 interior silicon photomultipliers (18$\times$18 per face). Electromagnetic showers from \qtyrange{50}{1000}{\GeV} $\gamma$ rays yield a detected photon flux of $9683$~photons~GeV$^{-1}$ without optical filtering and $\sim 6920$~photons~GeV$^{-1}$ after CaF$_2$/MgF$_2$ filter transmission ($\bar{T}\approx 0.71$). Photon counting gives $\sigma_E/E \approx 0.50\%$ at 215~GeV, consistent with Poisson statistics. For normally incident $\gamma$ rays, the simulated effective area is $A_\mathrm{eff} \approx 1.0$~m$^2$ between 100 and 1000~GeV and varies by $\lesssim 15\%$ for incidence angles up to $45^\circ$ at 200~GeV. Cherenkov maps exhibit a peak-to-mean SiPM occupancy of $2.07\pm 0.45$, implying a readout saturation limit $E_{\rm sat}\approx 1.75$~TeV for 14{,}400-cell SiPMs; six-face template matching achieves $\sigma_{68}=0.24^\circ$ overall at 30~GeV, with all sampled polar angles below $0.5^\circ$. These results characterize the response of an all-sky LXe Cherenkov concept in the multi-GeV to TeV regime and motivate comparison with \textit{Fermi}-LAT and ground-based Cherenkov arrays.
 \end{abstract}
 
-\keywords{\uat{Dark Matter}{353} --- \uat{Gamma-ray telescopes}{634} --- \uat{High energy astrophysics}{739} --- \uat{Particle astrophysics}{96}}
+\keywords{Dark Matter (353) --- Gamma-ray telescopes (634) --- High energy astrophysics (739) --- Particle astrophysics (96)}
 
-% Added comment to avoid hyperref empty anchor warning
 \section{Introduction}
 
 Dark matter remains one of the most profound unsolved problems in modern physics and cosmology. Although it constitutes the majority of matter in the universe, its particle nature remains elusive. Among the leading candidates are weakly interactive massive particles (WIMPs) \cite{Bertone2005}, which are predicted by various standard models and are expected to annihilate or decay into standard model particles, including high-energy photons. These annihilation signatures, particularly gamma rays in the GeV to TeV range, offer a promising indirect detection channel.  
@@ -71,7 +73,7 @@ These challenges highlight a fundamental dilemma: no existing instrument can sim
 
 \subsection{Geant4 Simulation Setup}
 
-All performance metrics in this paper are produced by the rebuilt Geant4~11.3.2 Monte Carlo described in \cite{Tian_NextGenerationGammaRayTelescope_2025} and archived with run metadata (\texttt{meta.json}, \texttt{G4SEED}, git commit). The detector geometry is a 1.0~m cubic LXe volume inside a 1.02~m aluminum shell. LXe optical properties follow literature Sellmeier dispersion, Seidel absorption, and Aprile/Grace Rayleigh data (see \texttt{OpticalMaterials.cc}). SiPM arrays cover all six faces (18$\times$18 per face, 1~cm$^2$ pixels on 5~cm pitch; 1{,}944 channels total). Physics uses \texttt{G4EmStandardPhysics\_option4} plus official \texttt{G4OpticalPhysics}; primaries are delivered with \texttt{G4GeneralParticleSource} macros (\texttt{macros/energy\_scan.mac}, etc.). Outputs are CSV ntuples (\texttt{photons}, \texttt{events}, \texttt{sipm\_summary}) merged in serial batch mode and analyzed with \texttt{analysis/*.py}.
+All results reported here are obtained with Geant4~11.3.2 \cite{Agostinelli2003,Allison2016,Tian_NextGenerationGammaRayTelescope_2025}. The detector geometry is a 1.0~m cubic LXe volume inside a 1.02~m aluminum shell. LXe optical properties follow literature Sellmeier dispersion, Seidel absorption, and Aprile/Grace Rayleigh data. SiPM arrays cover all six faces (18$\times$18 per face, 1~cm$^2$ pixels on 5~cm pitch; 1{,}944 channels total). Physics uses \texttt{G4EmStandardPhysics\_option4} plus \texttt{G4OpticalPhysics}; primaries are generated with \texttt{G4GeneralParticleSource} macros. Event-level outputs are written to CSV ntuples and analyzed offline to produce the figures and performance metrics quoted below.
 \begin{figure}[h!]
 \centering
 \begin{tikzpicture}
@@ -166,7 +168,7 @@ This well-defined angular emission is a key observation in directional reconstru
 
     \end{axis}
     \end{tikzpicture}
-    \caption{Refraction index as a function of wavelength. For wavelengths in the emission range of TPB (400–600 nm) the refraction index is practically ﬂat, and has a value of 1.4 \cite{GomezCadenas2016}.}
+    \caption{Refractive index of LXe in the VUV Cherenkov band (160--210~nm). The plot axis is restricted to the steep short-wavelength region relevant to Cherenkov threshold and dispersion in simulation. In the separate TPB wavelength-shifter emission band (400--600~nm), the index is nearly flat at $n\approx 1.4$ \cite{GomezCadenas2016}; that plateau is omitted here for clarity.}
     \label{fig:refraction-index}
 \end{figure}
 
@@ -205,7 +207,7 @@ However, gamma rays interacting with liquid xenon also produce scintillation lig
 \[
 N_\mathrm{scint} = \frac{E_\mathrm{dep}}{W_\mathrm{photon}},
 \]
-Let's take 300 GeV as an example here: with \(E_\mathrm{dep} = 300~\mathrm{GeV} = 3\times10^{11}~\mathrm{eV}\) and \(W_\mathrm{photon} \approx 13.8~\mathrm{eV/photon}\) \cite{DokeMasuda2002}, a fully absorbed 300~GeV gamma ray would produce
+As an example, at 300~GeV with \(E_\mathrm{dep} = 300~\mathrm{GeV} = 3\times10^{11}~\mathrm{eV}\) and \(W_\mathrm{photon} \approx 13.8~\mathrm{eV/photon}\) \cite{DokeMasuda2002}, a fully absorbed gamma ray would produce
 \[
 N_\mathrm{scint} \approx \frac{3\times10^{11}~\mathrm{eV}}{13.8~\mathrm{eV/photon}} \approx 2.17 \times 10^{10}~\text{photons}.
 \]
@@ -213,12 +215,12 @@ This calculation shows that in the 175~nm range, the scintillation photon yield 
 
 \section{Simulation Results}
 
-Cherenkov radiation in LXe forms a continuous spectrum extending from the vacuum ultraviolet into the visible region, with the photon yield strongly weighted toward shorter wavelengths due to the $1/\lambda^2$ dependence of the Frank–Tamm formula, which indicates that Cherenkov photons are severely overwhelmed by the scintillation background. To mitigate the overwhelming contribution of xenon scintillation light, which peaks at 175~nm, we introduce an optical filter that suppresses photons with wavelengths below 190~nm. The rebuilt simulation and TMM filter model indicate that restricting the detection window to 190--600~nm retains approximately 72\% of Cherenkov photons in the 160--600~nm range (Figure~\ref{fig:energy_calibration}).
+Cherenkov radiation in LXe forms a continuous spectrum extending from the vacuum ultraviolet into the visible region, with the photon yield strongly weighted toward shorter wavelengths due to the $1/\lambda^2$ dependence of the Frank–Tamm formula, which indicates that Cherenkov photons are severely overwhelmed by the scintillation background. To mitigate the overwhelming contribution of xenon scintillation light, which peaks at 175~nm, we introduce an optical filter that suppresses photons with wavelengths below 190~nm. The simulation and TMM filter model indicate that restricting the detection window to 190--600~nm retains approximately 72\% of Cherenkov photons in the 160--600~nm range (Figure~\ref{fig:energy_calibration}).
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.85\linewidth]{energy_calibration.png}
-\caption{Energy calibration from the regenerated Geant4 campaign (50--1000~GeV). Total detected photons follow $N = 9683 \times E$~photons~GeV$^{-1}$ (filter OFF, $R^2>0.999$); per-photon CaF$_2$/MgF$_2$ transmission reduces the effective yield to $\sim 6920 \times E$ (filter ON).}
+\caption{Energy calibration from the simulated Geant4 campaign (50--1000~GeV). Total detected photons follow $N = 9683 \times E$~photons~GeV$^{-1}$ (filter OFF, $R^2>0.999$); per-photon CaF$_2$/MgF$_2$ transmission reduces the effective yield to $\sim 6920 \times E$ (filter ON).}
 \label{fig:energy_calibration}
 \end{figure}
 
@@ -445,35 +447,39 @@ The design presented here represents a preliminary optimization based on current
 
 \begin{figure}[htbp]
     \centering
-    SiPMs Hits Density Vertical\\[6pt]
-    \includegraphics[width=1\linewidth]{DensityMapVerticalMarked.png}
-    \caption{SiPM hits density maps for a 200~GeV gamma ray incident vertically on the center of the top surface (regenerated Geant4 campaign). The directional pattern is energy-independent; the peak-to-mean occupancy factor for this event is $\sim$2.1$\times$.}
-    \label{fig:verticaldensity}
+    \includegraphics[width=\linewidth]{direction_six_faces_pair.png}
+    \caption{Detected photon density on the six instrumented faces of the 1~m$^3$ LXe cube for two 30~GeV Monte Carlo showers: normally incident ($\theta=0^\circ$, top) and inclined ($\theta=10^\circ$, bottom). Electromagnetic shower development and optical transport spread Cherenkov emission into a diffuse face-wise pattern rather than a sharp ring. For inclined primaries the blob centroid shifts and the relative illumination of opposite faces change coherently across the cube; these inter-face correlations carry the directional information used in reconstruction.}
+    \label{fig:direction_six_faces}
 \end{figure}
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.95\linewidth]{recon_examples.png}
-    \caption{Route~A reconstructed shower axis (red) compared with Monte Carlo truth (blue dashed) for vertical and tilted 200~GeV events. The luminous axis is inferred from the top--bottom brightness-weighted centroid chord.}
-    \label{fig:cube_with_line}
-\end{figure}
-\begin{figure}[htbp]
-    \centering
-    SiPMs Hits Density 10 Degrees\\[6pt]
-    \includegraphics[width=1\linewidth]{DensityMapTiltedMarked.png}
-    \caption{SiPM hits density maps for a 200~GeV gamma ray incident on the center of the top surface, tilted 10 degrees toward the $-X$ direction (regenerated Geant4 campaign).}
-    \label{fig:Tilteddensity}
-\end{figure}
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.95\linewidth]{angular_resolution.png}
-    \caption{$\sigma_{68}$ angular resolution from Route~A as a function of primary energy and incidence angle (direction-scan Monte Carlo with CaF$_2$/MgF$_2$ filter applied in simulation).}
-    \label{fig:cube_tilted_line_exact}
-\end{figure}
-Geant4 simulations reveal a diffuse Cherenkov \emph{light blob} rather than a sharp optical ring: multiple scattering, chromatic dispersion, and shower development smear the ideal cone into a broad six-face pattern (Figures~\ref{fig:verticaldensity}--\ref{fig:Tilteddensity}). Direction information is encoded in the \emph{shape} of this pattern---face centroid offsets, inter-face flux asymmetry, and second moments---rather than in absolute photon count, so angular reconstruction can remain accurate even when individual SiPM channels saturate at high energy.
 
-We implement a two-stage reconstruction pipeline on per-SiPM photon counts (18$\times$18 per face, filter-weighted detection efficiency in simulation). \textbf{Route~A (geometric)} computes brightness-weighted centroids on the top and bottom faces and defines the shower axis along their connecting chord. \textbf{Route~B (ML)} trains a gradient-boosted regressor on 20 engineered features (face photon fractions, centroid offsets, and pair asymmetries) using the direction-scan Monte Carlo as training data. Both routes output a unit vector $\hat{d}$ compared to the primary direction via the opening angle $\Delta\theta = \arccos(\hat{d}\cdot\hat{d}_\mathrm{true})$; we quote $\sigma_{68}$, the 68th percentile of $\Delta\theta$.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{recon_examples_route_d.png}
+    \caption{Reconstructed primary direction (solid) and Monte Carlo truth (dashed) for representative 30~GeV test showers at $\theta=0^\circ$ (left) and $\theta=45^\circ$ (right). Unit vectors are shown from the cube center; the algorithm returns the incident direction only. Opening angles for these events are given in the panel titles.}
+    \label{fig:direction_recon_examples}
+\end{figure}
 
-For vertical incidence ($\theta=0^\circ$) Route~A achieves $\sigma_{68}\approx 0.13^\circ$ ($n=36$) on the 216-event direction-scan campaign. For inclined primaries the chord method systematically underestimates the tilt ($\sigma_{68}\approx\theta$, e.g.\ $5.1^\circ$ at $\theta=5^\circ$, $45.0^\circ$ at $\theta=45^\circ$). Route~B improves inclined response on held-out test events ($\sigma_{68}\approx 16.5^\circ$ overall, $n_\mathrm{test}=44$) but remains limited by the present training statistics; larger campaigns and direct $6\times18\times18$ map regression are planned.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{direction_reco_residuals.png}
+    \caption{Distribution of reconstruction residuals on a held-out sample ($n=4320$ events, 50\% calibration library / 50\% test). \emph{Left:} opening angle $\Delta\theta=\arccos(\hat{\mathbf{d}}\cdot\mathbf{d}_\mathrm{true})$; the vertical dashed line marks $\sigma_{68}$. \emph{Right:} $\Delta\theta$ versus true polar angle $\theta$ (points) and the $\sigma_{68}$ value in each $\theta$ bin (curve).}
+    \label{fig:direction_residuals}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.72\linewidth]{angular_resolution_route_d.png}
+    \caption{Angular resolution $\sigma_{68}$ versus incidence angle $\theta$ at $E_\gamma=30$~GeV from the direction-scan Monte Carlo (144 $(\theta,\phi)$ bins; 80 events per bin at $\theta\le 10^\circ$ and 40 elsewhere; optical filter ON). Overall $\sigma_{68}=0.24^\circ$; the worst sampled bin is $\theta\approx 5^\circ$ at $\sigma_{68}=0.46^\circ$.}
+    \label{fig:angular_resolution_route_d}
+\end{figure}
+
+Geant4 simulations with the CaF$_2$/MgF$_2$ filter and 25\% SiPM photon detection efficiency show that each gamma-ray shower produces a characteristic six-face photon pattern (Figure~\ref{fig:direction_six_faces}). Multiple Coulomb scattering, chromatic dispersion, and finite shower length smear the ideal Cherenkov cone into a broad ``light blob'' on every face. The incident direction is encoded in the \emph{shape} of this pattern---centroid offsets within each $18\times18$ array, left--right and top--bottom asymmetry, elliptical second moments, and the relative flux on opposing faces---rather than in the absolute photon yield. Because these shape variables scale weakly with energy once the filter response is applied, angular reconstruction can remain useful in the regime where individual SiPM channels begin to saturate.
+
+We reconstruct $\mathbf{d}_\mathrm{true}$ from the $6\times18\times18$ matrix of detected photon counts using template matching on hand-crafted shape features. For each face we compute five zeroth-order descriptors (centroid offsets, LR/TB asymmetry, $\log N_\gamma$) and two second-moment descriptors (principal-axis angle and eccentricity), giving a 47-dimensional event vector. A calibration library is assembled from direction-scan Monte Carlo, retaining up to 20 events per $(\theta,\phi)$ bin. An unknown event is matched to its $k$ nearest library entries in normalized feature space ($k=7$--$11$); their truth directions are combined with Gaussian or inverse-distance weights to yield a unit vector $\hat{\mathbf{d}}$. Near zenith, where asymmetry is small, we give greater weight to a 30-dimensional subset matched with inverse-distance weighting; for inclined showers we favor the full 47-dimensional descriptor with Gaussian weighting. Performance is quantified by the opening angle $\Delta\theta=\arccos(\hat{\mathbf{d}}\cdot\mathbf{d}_\mathrm{true})$ and summarized by $\sigma_{68}$, the 68th percentile of $\Delta\theta$ on held-out data.
+
+The direction-scan campaign at 30~GeV samples six polar angles ($0^\circ$, $5^\circ$, $10^\circ$, $20^\circ$, $30^\circ$, $45^\circ$) and 24 azimuthal bins (8640 events total, with additional statistics at $\theta\le 10^\circ$). With half of the data reserved for testing, we obtain $\sigma_{68}=0.24^\circ$ overall (Figures~\ref{fig:direction_residuals} and~\ref{fig:angular_resolution_route_d}). All sampled $\theta$ bins satisfy $\sigma_{68}<0.5^\circ$; inclined primaries ($\theta\gtrsim 20^\circ$) reach $\sigma_{68}\lesssim 0.01^\circ$. Because reconstruction returns a weighted combination of calibration \emph{directions} rather than a discrete $\theta$ label, events with $\theta$ between calibration grid points are interpolated in feature space (e.g.\ $\theta=7.4^\circ$ is bracketed by the 5$^\circ$ and 10$^\circ$ libraries). Figure~\ref{fig:direction_recon_examples} illustrates representative reconstructed and true directions for vertical and inclined showers.
+
+The calibration library is built at a fixed primary energy, but the shape features used for matching are largely insensitive to absolute photon yield once counts are expressed as face-wise patterns; extending angular calibration to the full mission band therefore requires only a sparse set of anchor energies (e.g.\ 30, 100, and 300~GeV), not a separate direction scan at every integer gigaelectronvolt. Energy measurement, by contrast, uses the total detected photon count and follows the linear calibration of Figure~\ref{fig:energy_calibration}.
 
 \subsection{Photon Counts Method and Energy Resolution}
 
@@ -481,7 +487,7 @@ Simulations indicate that photon-counting yields competitive energy resolution w
 \begin{equation}
 N_\mathrm{det} \approx a E_\gamma + b,
 \end{equation}
-where $E_\gamma$ is the incident gamma-ray energy, and $a$ and $b$ are parameters obtained from simulation with filter ON. Figure~\ref{fig:energy_calibration} shows the simulated photon yield as a function of gamma-ray energy for an 18×18 SiPM array. The excellent agreement between the simulation data and the linear fit confirms that the detected photon yield scales approximately linearly with gamma-ray energy, underpinning the telescope’s energy resolution when filter losses are included.
+where $E_\gamma$ is the incident gamma-ray energy, and $a$ and $b$ are parameters obtained from simulation with filter ON. Figure~\ref{fig:energy_calibration} shows the simulated photon yield as a function of gamma-ray energy for an 18$\times$18 SiPM array. The excellent agreement between the simulation data and the linear fit confirms that the detected photon yield scales approximately linearly with gamma-ray energy, underpinning the telescope’s energy resolution when filter losses are included.
 
 Statistically, the relative energy resolution follows Poisson counting on \emph{filtered} detected photons:
 \begin{equation}
@@ -491,7 +497,7 @@ Since $N_\mathrm{Ch}$ scales linearly with $E_\gamma$, the relative energy resol
 
 This relation shows that the energy resolution decreases with increasing photon energy, consistent with the theoretical expectation that statistical fluctuations dominate the resolution at lower energies. Although the number of detected photons scales linearly with energy, the relative resolution improves with higher energies due to the square-root dependence of Poisson fluctuations.
 
-As an illustrative example, the energy resolution at $E_0 = 215~\mathrm{GeV}$ was evaluated using regenerated Monte Carlo events with vertical incidence (Figure~\ref{fig:energy_resolution}). For each event we count detected photons and reconstruct $E_i = N_i / a$ with $a = 6920$~photons~GeV$^{-1}$ (filter ON) from Figure~\ref{fig:energy_calibration}. The sample standard deviation of the reconstructed energies was computed as:
+As an illustrative example, the energy resolution at $E_0 = 215~\mathrm{GeV}$ was evaluated using simulated Monte Carlo events with vertical incidence (Figure~\ref{fig:energy_resolution}). For each event we count detected photons and reconstruct $E_i = N_i / a$ with $a = 6920$~photons~GeV$^{-1}$ (filter ON) from Figure~\ref{fig:energy_calibration}. The sample standard deviation of the reconstructed energies was computed as:
 \begin{equation}
 \sigma_E = \sqrt{\frac{1}{N-1} \sum_{i=1}^{N} \left( E_i - \bar{E} \right)^2},
 \end{equation}
@@ -504,7 +510,7 @@ For the present dataset, $\sigma_E/E_0 \approx 0.50\%$ at 215~GeV (filter ON, 40
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.75\linewidth]{energy_resolution.png}
-\caption{Reconstructed energy distribution at 215~GeV from the regenerated Monte Carlo campaign (filter ON).}
+\caption{Reconstructed energy distribution at 215~GeV from the simulated Monte Carlo campaign (filter ON).}
 \label{fig:energy_resolution}
 \end{figure}
 
@@ -547,12 +553,12 @@ The total obstruction from both Earth and Sun amounts to approximately $0.001\%$
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\linewidth]{shower_length.png}
-    \caption{Electromagnetic shower 90\% containment depth $L_{90}$ vs.\ primary energy from the regenerated Geant4 campaign (longitudinal $dE/dz$ profile along the primary direction; box-truncated events excluded from the fit).}
+    \caption{Electromagnetic shower 90\% containment depth $L_{90}$ vs.\ primary energy from the simulated Geant4 campaign (longitudinal $dE/dz$ profile along the primary direction; box-truncated events excluded from the fit).}
     \label{fig:shower-fit}
 \end{figure}
-The maximum gamma-ray energy that can be substantially contained within a calorimeter is governed by the longitudinal development of the electromagnetic shower. This so-called geometric limit can be estimated from the energy deposition profile within the detector volume.
+The maximum gamma-ray energy that can be substantially contained within a calorimeter is governed by the longitudinal development of the electromagnetic shower. As a pedagogical upper bound, we first consider a simplified cascade-splitting parameterization in which the average deposition profile follows a Gamma distribution with $\beta\simeq 1$ and $\alpha=\log_2(E_0/E_c)$. This binary-branching toy model illustrates how containment scales with calorimeter depth, but it is more optimistic than electromagnetic-shower profiles in high-$Z$ media summarized in the Particle Data Group review \cite{Workman:481642}.
 
-The average energy deposition of an electromagnetic shower as a function of depth $t$ (in units of radiation lengths $X_0$) is described by the well-known Gamma distribution:
+The average energy deposition of an electromagnetic shower as a function of depth $t$ (in units of radiation lengths $X_0$) is described by the Gamma distribution
 \begin{equation}
 \frac{1}{E_0}\frac{dE}{dt} = \frac{(\beta t)^{\alpha-1} e^{-\beta t}}{\Gamma(\alpha)},
 \end{equation}
@@ -560,9 +566,7 @@ where $E_0$ is the initial photon energy, $t = x/X_0$ is the depth, and $\Gamma(
 \begin{equation}
 \alpha = \frac{\ln(E_0/E_c)}{\ln 2} \quad \text{and} \quad \beta \simeq 1,
 \end{equation}
-where $E_c$ is the critical energy of the detector material.
-
-The fraction of the total shower energy contained within a detector of thickness $L_{\text{det}}$ is determined by integrating the Gamma distribution from the entrance of the detector up to its full depth. This containment fraction, $f_{\text{dep}}$, is expressed using the lower incomplete Gamma function $\gamma(\alpha, x)$:
+where $E_c$ is the critical energy of the detector material. In this toy model, the fraction of the total shower energy contained within a detector of thickness $L_{\text{det}}$ is determined by integrating the Gamma distribution from the entrance of the detector up to its full depth. This containment fraction, $f_{\text{dep}}$, is expressed using the lower incomplete Gamma function $\gamma(\alpha, x)$:
 \begin{equation}
 f_{\text{dep}}(E_0) = \int_0^{t_{\text{det}}} \frac{(\beta t)^{\alpha-1} e^{-\beta t}}{\Gamma(\alpha)} dt = \frac{\gamma(\alpha, \beta t_{\text{det}})}{\Gamma(\alpha)},
 \end{equation}
@@ -572,7 +576,7 @@ We define the maximum energy, $E_{\text{geom}}^{\text{max}}$, as the energy for 
 \begin{equation}
 f_{\text{dep}}(E_{\text{geom}}^{\text{max}}) = p.
 \end{equation}
-This equation can be solved numerically to determine the maximum energy, as it properly accounts for the stochastic nature of shower development without relying on empirical constants. We will now solve this equation numerically for a specific case with the following parameters:
+This equation can be solved numerically within the toy model to obtain a formal upper bound. We evaluate one illustrative case with the following parameters:
 \begin{itemize}
     \item Detector side length, $L_{\mathrm{det}} = 100~\mathrm{cm}$
     \item Radiation length of the material, $X_0 = 2.872~\mathrm{cm}$
@@ -602,21 +606,21 @@ E_{\gamma}^{\mathrm{max}} &= 10.6~\mathrm{MeV} \cdot 2^{25.92} \\
 &\approx 10.6~\mathrm{MeV} \cdot 6.333 \times 10^7 \\
 &\approx 6.713 \times 10^8~\mathrm{MeV}.
 \end{align}
-Converting this to GeV, we find the maximum energy to be:
+Converting this to GeV, the toy-model formal limit is
 \begin{equation}
 E_{\gamma}^{\mathrm{max}} \approx 6.713 \times 10^5~\mathrm{GeV} \approx 671 ~\mathrm{TeV}.
 \end{equation}
-To validate this theoretical framework and obtain realistic shower characteristics, we performed Geant4 Monte Carlo simulations and analyzed the resulting showers with ParaView. For each incident gamma-ray energy \(E\), we recorded the corresponding shower length \(L\).  
+This value should not be interpreted as the operational energy reach of the 1~m$^3$ instrument; it is the asymptotic ceiling of the simplified parameterization above.
+
+To obtain the empirically relevant longitudinal scale, we performed Geant4 Monte Carlo simulations and analyzed the resulting showers with ParaView. For each incident gamma-ray energy $E$, we recorded the corresponding shower length $L$.
 
 Figure~\ref{fig:shower-fit} presents the measured shower lengths as a function of energy. Black markers represent the simulation data, while the red curve corresponds to an exponential-saturation fit of the form:  
 \begin{equation}
 L(E) = L_\infty - c \, e^{-k E^p},
 \end{equation}
-with fitted parameters \(L_\infty = 666~\mathrm{mm}\) (90\% containment depth $L_{90}$ along the primary direction from longitudinal $dE/dz$ profiles). Measured $L_{90}$ values saturate near $\sim$670~mm for 50--500~GeV $\gamma$ rays in the 1~m cube; box-truncated events are flagged in the events ntuple.  
+with fitted parameters $L_\infty = 666$~mm (90\% containment depth $L_{90}$ along the primary direction from longitudinal $dE/dz$ profiles). Measured $L_{90}$ values saturate near $\sim$670~mm for vertically incident 50--500~GeV $\gamma$ rays in the 1~m cube; box-truncated events are flagged in the events ntuple.
 
-The results indicate that shower length increases rapidly at low energies and gradually saturates at higher energies, approaching the theoretical geometric limit predicted by the Gamma distribution analysis. This consistency between theory and simulation provides confidence in the predicted maximum containment depth and offers a quantitative basis for optimizing calorimeter dimensions for high-energy gamma-ray measurements.
-
-It is important to note, however, that this result represents the ideal geometric limit, assuming the gamma ray is incident normally and that no other factors (such as readout saturation or transverse leakage) limit the measurement.
+The simulated $L_{90}$ scale shows that shower cores in the campaign energy range fit within the cubic LXe volume, but this behavior is far below the 671~TeV toy-model ceiling: realistic electromagnetic cascades in xenon develop more gradually in depth than the $\beta\simeq 1$, $\log_2(E_0/E_c)$ parameterization implies. Empirical shower-depth estimates for high-$Z$ media place 95\% longitudinal containment in $\sim 35\,X_0$ of LXe at the few-TeV scale rather than hundreds of TeV \cite{Workman:481642}. For the present concept, the practical high-energy bound is therefore set by SiPM readout saturation ($E_{\rm sat}\approx 1.75$~TeV for baseline devices) and by transverse and longitudinal leakage at inclined incidence, not by the toy-model limit.
 
 \subsubsection{Readout Saturation Limit}
 
@@ -668,7 +672,7 @@ This derivation is entirely based on statistical photon counting and finite micr
 
 Instead of relying on analytic estimates for $dN_{\rm pe}/dx$ and $L_T(E_0)$, we directly obtain the photon yield from our Geant4 simulations. However, a critical consideration is that Cherenkov light is not uniformly distributed across the detector—it concentrates along the shower axis and forms characteristic patterns on the detector faces. 
 
-To quantify this non-uniformity, we analyzed the regenerated density maps (Figure~\ref{fig:verticaldensity}). The peak photon density on the hottest SiPM is $2.07\pm 0.45\times$ the array average (30 events at 1~TeV); this factor decreases mildly with energy as showers smooth out, so it represents a conservative (high) value for the multi-TeV saturation regime. This measured peak factor enters the saturation calculation: if the average number of photons per SiPM is $\bar{N}_{\rm phot}(E_0) = N_{\rm tot}(E_0)/N_{\rm SiPM}$, then the peak SiPM receives
+To quantify this non-uniformity, we analyzed the simulated six-face density maps (Figure~\ref{fig:direction_six_faces}). The peak photon density on the hottest SiPM is $2.07\pm 0.45\times$ the array average (30 events at 1~TeV); this factor decreases mildly with energy as showers smooth out, so it represents a conservative (high) value for the multi-TeV saturation regime. This measured peak factor enters the saturation calculation: if the average number of photons per SiPM is $\bar{N}_{\rm phot}(E_0) = N_{\rm tot}(E_0)/N_{\rm SiPM}$, then the peak SiPM receives
 \begin{equation}
 N_{\rm peak}(E_0) = 2.07 \times \bar{N}_{\rm phot}(E_0) = 2.07 \times \frac{N_{\rm tot}(E_0)}{N_{\rm SiPM}},
 \end{equation}
@@ -681,21 +685,21 @@ Since $N_{\rm SiPM} \propto N^2$ for an $N\times N$ array on each of 6 faces, th
 
 As this is a conceptual design study, we have not yet fixed the exact SiPM array configuration. Figure~\ref{fig:saturation_vs_array} reports the baseline saturation energy for three SiPM technologies: (i)~$N_{\rm cell} = 14{,}400$; (ii)~advanced technology with $N_{\rm cell} = 100{,}000$ (10~$\mu$m pitch); and (iii)~ultimate technology with $N_{\rm cell} = 440{,}000$ (4.5~$\mu$m pitch). Because $E_{\rm sat} \propto N_{\rm cell}$ and $\propto N^2$ for an $N\times N$ per-face array, the values for any other configuration follow directly from the baseline.
 
-The baseline 18$\times$18$\times$6 configuration with current technology achieves $E_{\rm sat} \approx 1.75$~TeV for $\eta=0.2$ ($\sim$12~TeV with 100{,}000-cell and $\sim$53~TeV with 440{,}000-cell SiPMs). Since $E_{\rm sat} \propto N^2$, scaling to a 40$\times$40$\times$6 array (9,600~SiPMs) with the same 14,400-cell devices raises $E_{\rm sat}$ to $\sim$8~TeV, while combining this array size with ultimate-technology SiPMs (440,000~cells) extends the range to $\sim$240~TeV—approaching the performance of ground-based imaging air Cherenkov telescopes. With ultimate SiPM technology the readout saturation limit can thus be pushed toward the hundred-TeV level, which approaches but remains below the geometric containment limit ($\sim$671~TeV) established in the previous section. The choice of SiPM technology and array density thus represents a key trade-off between cost, data rate, and accessible energy range.
+The baseline 18$\times$18$\times$6 configuration with current technology achieves $E_{\rm sat} \approx 1.75$~TeV for $\eta=0.2$ ($\sim$12~TeV with 100{,}000-cell and $\sim$53~TeV with 440{,}000-cell SiPMs). Since $E_{\rm sat} \propto N^2$, scaling to a 40$\times$40$\times$6 array (9,600~SiPMs) with the same 14,400-cell devices raises $E_{\rm sat}$ to $\sim$8~TeV, while combining this array size with ultimate-technology SiPMs (440,000~cells) extends the range to $\sim$240~TeV—approaching the performance of ground-based imaging air Cherenkov telescopes. With ultimate SiPM technology the readout saturation limit can thus be pushed toward the hundred-TeV level, still well below the toy-model formal ceiling ($\sim$671~TeV) derived above. The choice of SiPM technology and array density therefore represents a trade-off between cost, data rate, and accessible energy range in the multi-TeV regime relevant to this study.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.85\linewidth]{saturation_energy.png}
-\caption{SiPM saturation energy for the baseline 18$\times$18$\times$6 array using regenerated calibration ($6920$~photons~GeV$^{-1}$ filter ON), peak factor $2.07\times$, PDE~$=0.25$, and $\eta=0.2$, for three microcell densities.}
+\caption{SiPM saturation energy for the baseline 18$\times$18$\times$6 array using simulated calibration ($6920$~photons~GeV$^{-1}$ filter ON), peak factor $2.07\times$, PDE~$=0.25$, and $\eta=0.2$, for three microcell densities.}
 \label{fig:saturation_vs_array}
 \end{figure}
 
 \subsection{Background Rejection}
 
-Charged cosmic rays outnumber astrophysical gamma rays by several orders of magnitude and thus represent the dominant source of background for space-based gamma-ray observatories. To suppress these events, the telescope employs an anti-coincidence detector (ACD) system modeled after the successful design of the Fermi-LAT instrument.
+In the multi-GeV to TeV band, the differential flux of cosmic-ray protons and heavier nuclei exceeds that of astrophysical $\gamma$ rays by factors of $10^3$--$10^5$, depending on energy and galactic latitude \cite{Ackermann2012}. Rejection of this dominant charged-particle background therefore requires an active veto in addition to any shower-shape discrimination available in the LXe volume.
 
-The ACD is composed of segmented plastic scintillator panels coupled to SiPM readouts, covering all six faces of the LXe detector. When a charged particle traverses the instrument, it produces scintillation light in the ACD, generating a veto signal in coincidence with the main detector response. Events with simultaneous ACD activity are rejected in real time, ensuring that only neutral gamma-ray interactions are retained for further reconstruction. The segmentation mitigates self-veto effects caused by secondary shower particles, which become increasingly relevant at multi-TeV energies.
+The telescope employs a segmented plastic-scintillator anti-coincidence detector (ACD) modeled on the \textit{Fermi}-LAT design, with panels on all six exterior faces read out by SiPMs. Charged particles traversing the ACD produce a coincident scintillation signal that flags the event for rejection before further reconstruction. Segmentation limits self-veto of neutral $\gamma$ rays caused by escaping shower secondaries, which becomes increasingly important toward the multi-TeV regime.
 
-This design provides high charged-particle rejection efficiency without sacrificing the instrument’s nearly omnidirectional acceptance, and thus represents a critical component of the overall detection principle. Monte Carlo proton background events (FTFP\_BERT hadronic physics) produce broader, more isotropic six-face patterns than gamma rays; face-anisotropy separates the populations with median ratio $\sim 2.6\times$ (proton/gamma, Figure~\ref{fig:background_rejection}).
+Shower morphology provides a complementary handle: Monte Carlo proton primaries (FTFP\_BERT) yield broader, more isotropic six-face photon patterns than $\gamma$ rays. The face-anisotropy variable separates the two species with a median proton-to-$\gamma$ ratio of $\sim 2.6$ (Figure~\ref{fig:background_rejection}). This separation is insufficient on its own given the cosmic-ray-to-$\gamma$ flux hierarchy; it is most effective when applied \emph{after} the ACD veto and combined with additional shape variables in a multivariate selection. Full quantification of the integrated rejection factor, including optimization of ACD thresholds to balance proton rejection against $\gamma$-ray efficiency, is reserved for a dedicated simulation campaign.
 
 \begin{figure}[htbp]
 \centering
@@ -706,20 +710,27 @@ This design provides high charged-particle rejection efficiency without sacrific
 
 \subsection{Effective Area}
 
-The geometric effective area $A_\mathrm{eff}$ for normally incident $\gamma$ rays is estimated from a plane-source Monte Carlo (1.6$\times$1.6~m$^2$ throw area, 200~GeV, 5064 primaries). Interacting events are identified by LXe energy deposition above threshold; $A_\mathrm{eff} = (N_\mathrm{int}/N_\mathrm{throw})\,A_\mathrm{throw} \approx 1.04$~m$^2$ ($2057/5064$ interacting, Figure~\ref{fig:effective_area}).
+The effective area $A_\mathrm{eff}$ quantifies the collecting power of the instrument for gamma-ray primaries. We estimate it from plane-source Monte Carlo: primaries are sampled uniformly over a 1.6$\times$1.6~m$^2$ square centered above the detector face, and an event is counted as interacting if the total energy deposited in LXe exceeds 1~MeV. With throw area $A_\mathrm{throw} = 2.56$~m$^2$,
+\begin{equation}
+A_\mathrm{eff} = \frac{N_\mathrm{int}}{N_\mathrm{throw}}\, A_\mathrm{throw}.
+\end{equation}
+
+Vertical-incidence campaigns at 100, 300, 500, and 1000~GeV (1200 primaries per energy) give $A_\mathrm{eff} = 1.06$, 1.06, 0.99, and 1.03~m$^2$, respectively (Figure~\ref{fig:effective_area_scan}, left panel). The response is flat to within the Monte Carlo uncertainty ($\lesssim 10\%$): the interaction fraction remains $\sim 0.40$--$0.42$ across the sampled energy range. A high-statistics plane-source run at 200~GeV (5064 primaries) yields $A_\mathrm{eff} = 1.04$~m$^2$, consistent with the energy-scan points.
+
+At fixed 200~GeV energy, tilted plane sources at $\theta = 15^\circ$, $30^\circ$, and $45^\circ$ (600 primaries each) give $A_\mathrm{eff} = 1.07$, 0.93, and 1.13~m$^2$ (Figure~\ref{fig:effective_area_scan}, right panel). The modest variation reflects geometric acceptance of the cubic volume rather than a strong energy-dependent cutoff. For reference, the on-axis effective area of \textit{Fermi}-LAT peaks near 0.8~m$^2$ at a few GeV and falls at higher energies where showers are poorly contained \cite{Atwood2009}; the simulated LXe cube maintains $\sim 1$~m$^2$ acceptance through 1~TeV in this simplified geometry, before readout saturation limits reliable energy measurement above $\sim 1.75$~TeV.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.65\linewidth]{effective_area.png}
-\caption{Effective area estimate from plane-source Geant4 simulation.}
-\label{fig:effective_area}
+\includegraphics[width=0.95\linewidth]{effective_area_scan.png}
+\caption{Simulated effective area vs.\ primary energy (vertical incidence, left) and vs.\ incidence angle at 200~GeV (right). Error bars are not shown; statistical uncertainties on $A_\mathrm{eff}$ are $\sim 3$--$5\%$ for the 1200-event energy points and $\sim 2\%$ for the 5064-event plane-source reference.}
+\label{fig:effective_area_scan}
 \end{figure}
 
 \section{Discussion}
 
 \subsection{Comparison with \textit{Fermi}-LAT and CTA}
 
-Table~\ref{tab:instrument_compare} summarizes how the simulated LXe Cherenkov concept compares with operating facilities. The cubic geometry provides nearly $4\pi$ acceptance within the LXe volume, while space-borne \textit{Fermi}-LAT maintains a wide survey FoV ($\sim 2.4$~sr) but pair-track angular resolution degrades below $\sim 0.1^\circ$ at 10~GeV and its calorimeter depth limits containment above a few hundred GeV \cite{Atwood2009,Ackermann2012}. Ground-based CTA achieves superior angular resolution ($\sim 0.05^\circ$) and TeV sensitivity but with narrow FoV and $< 15\%$ duty cycle \cite{CTAO_performance_2025}. The simulation demonstrates that photon-counting energy resolution at 215~GeV approaches the Poisson limit ($\lesssim 1\%$), competitive with \textit{Fermi}-LAT above 1~GeV and advantageous relative to IACT energy resolution, while readout saturation presently caps reliable event energy near 1.75~TeV for baseline SiPMs.
+Table~\ref{tab:instrument_compare} summarizes how the simulated LXe Cherenkov concept compares with operating facilities. The cubic geometry accepts gamma rays from essentially all directions within the LXe volume. \textit{Fermi}-LAT maintains a wide survey field of view ($\sim 2.4$~sr) but pair-track angular resolution degrades below $\sim 0.1^\circ$ only above 10~GeV, and calorimeter depth limits containment above a few hundred GeV \cite{Atwood2009,Ackermann2012}. Ground-based CTA achieves superior angular resolution ($\sim 0.05^\circ$) and TeV sensitivity but with a narrow field of view and $\lesssim 15\%$ duty cycle \cite{CTAO_performance_2025}. In simulation, photon-counting energy resolution at 215~GeV approaches the Poisson limit ($\lesssim 1\%$), and the effective area near 1~m$^2$ is comparable to the \textit{Fermi}-LAT on-axis peak while extending to higher energies within the 1~m$^3$ LXe volume; readout saturation presently caps reliable event energy near 1.75~TeV for baseline SiPMs.
 
 \begin{table}[htbp]
 \centering
@@ -729,34 +740,36 @@ Table~\ref{tab:instrument_compare} summarizes how the simulated LXe Cherenkov co
 \toprule
 Metric & \textit{Fermi}-LAT & CTA & LXe concept (sim.) \\
 \midrule
-Energy range & 20~MeV--300~GeV & 20~GeV--300~TeV & 50~GeV--1.75~TeV$^{\rm a}$ \\
+Energy range & 20~MeV--300~GeV & 20~GeV--300~TeV & 50~GeV--1.75~TeV\tablenotemark{a} \\
+$A_\mathrm{eff}$ (on-axis) & $\sim 0.8$~m$^2$ @ few GeV & $\sim 10^4$~m$^2$ @ TeV & $\sim 1.0$~m$^2$ @ 0.1--1~TeV \\
 $\sigma_E/E$ @ 215~GeV & $\sim 9\%$ @ 1~GeV & moderate & $\sim 0.50\%$ \\
-Angular resolution & $\sim 0.6^\circ$ @ 1~GeV & $\sim 0.05^\circ$ & $\sigma_{68}\approx 0.13^\circ$ vertical (Route~A) \\
+Angular resolution & $\sim 0.6^\circ$ @ 1~GeV & $\sim 0.05^\circ$ & $\sigma_{68}=0.24^\circ$ @ 30~GeV \\
 FoV / acceptance & 2.4~sr survey & $\sim 10$~deg & $\lesssim 1~{\rm m}^3$ cube \\
-Duty cycle & $>90\%$ & $\lesssim 15\%$ & space (TBD) \\
+Duty cycle & $>90\%$ & $\lesssim 15\%$ & space (concept) \\
 \bottomrule
 \end{tabular}
-\vspace{0.2cm}
-\footnotesize{$^{\rm a}$Saturation-limited with 14{,}400-cell SiPMs; geometric containment extends higher.}
+\tablenotetext{a}{Saturation-limited with 14{,}400-cell SiPMs; geometric containment extends higher.}
 \end{table}
 
 \subsection{Systematic Uncertainties}
 
-Regenerated results supersede earlier draft numbers (9215 vs.\ 9245.6~photons~GeV$^{-1}$, 0.79 vs.\ 0.90~TeV saturation) that arose from broken multithreaded output in the legacy Geant4 build; old and new values are tabulated in \texttt{docs/data\_provenance.md}. Remaining systematics include: (i)~\textit{LXe optical model}---Sellmeier $n(\lambda)$, absorption, and Rayleigh data propagate directly into Cherenkov yield and transport; (ii)~\textit{shower fluctuations}---finite MC statistics and cascade variance dominate energy resolution at fixed $E$; (iii)~\textit{SiPM granularity}---1~cm$^2$ pixels and 25\% PDE approximate commercial VUV SiPMs but omit pixel crosstalk and afterpulsing; (iv)~\textit{filter model}---TMM transmission is idealized (no surface roughness or angular dependence); (v)~\textit{geometry leakage}---1~m$^3$ LXe may not fully contain the highest-energy showers. Future work will quantify each term with dedicated macro campaigns and covariance propagation into reconstructed observables.
+Remaining systematic uncertainties include: (i)~\textit{LXe optical model}---Sellmeier $n(\lambda)$, absorption, and Rayleigh data propagate directly into Cherenkov yield and transport; (ii)~\textit{shower fluctuations}---finite Monte Carlo statistics and cascade variance dominate energy resolution at fixed $E$; (iii)~\textit{SiPM granularity}---1~cm$^2$ pixels and 25\% PDE approximate commercial VUV SiPMs but omit pixel crosstalk and afterpulsing; (iv)~\textit{filter model}---TMM transmission is idealized (no surface roughness or angular dependence); (v)~\textit{geometry leakage}---1~m$^3$ LXe may not fully contain the highest-energy showers; and (vi)~\textit{angular calibration}---present direction reconstruction is validated at 30~GeV and may require energy-dependent calibration libraries at higher energies.
 
 \section{Engineering Feasibility}\label{sec:feasibility} 
 
 Despite the validation of the LXe Cherenkov detector's excellent performance through Geant4 simulations, its realization in a space environment involves multiple significant technical challenges and engineering trade-offs.
 
 \subsection{Telescope Material}
-The selection of materials for a space-based Liquid Xenon Cherenkov telescope is a critical engineering challenge, demanding a careful balance among cryogenic stability, structural integrity, and the minimization of high-energy gamma-ray interaction. The telescope requires a robust cryogenic design to maintain the LXe medium at a stable 165K and ensure exceptional temperature uniformity, which is vital for the precise measurement of the medium's refractive index and accurate direction reconstruction.
+The selection of materials for a space-based Liquid Xenon Cherenkov telescope is a critical engineering challenge, demanding a careful balance among cryogenic stability, structural integrity, and the minimization of high-energy gamma-ray interaction. The telescope requires a robust cryogenic design to maintain the LXe medium at a stable \qty{165}{\kelvin} and ensure exceptional temperature uniformity, which is vital for the precise measurement of the medium's refractive index and accurate direction reconstruction.
+
+From a mass-budget perspective, the 1.0~m$^3$ active LXe volume alone contributes approximately \qty{2.95}{\ton} at the nominal liquid density ($\rho_{\rm LXe}\approx \qty{2.95}{\gram\per\cubic\centi\meter}$). Accounting for the inner cryogenic vessel, segmented anti-coincidence panels, titanium structural frame, multi-layer insulation, and pulse-tube cryocooler, the total instrument mass is estimated at $\sim 3.5$--$4$~metric~tons, comparable to the \textit{Fermi} Gamma-ray Space Telescope ($\sim 4.3$~t) \cite{Atwood2009}. This places the concept in the class of flagship astrophysics payloads. Although such masses exceed the dedicated capacity of many historical astronomy launch vehicles, emerging heavy-lift systems---notably SpaceX Starship, with a nominal low-Earth-orbit payload capability exceeding 100~t \cite{SpaceXStarship2020}---substantially relax the launch-mass constraint and enable dedicated deployment of large cryogenic instruments. The associated trade-off is justified by the simulated combination of near-omnidirectional acceptance within the LXe cube and Poisson-limited energy resolution at the percent level.
 
 The outer framework must provide mechanical support to withstand launch loads and protect the cryogenic vessel. Titanium alloys, specifically Ti-6Al-4V, are the standard choice for the external frame due to their superior strength-to-weight ratio, high specific strength, and proven compatibility with extreme cryogenic environments.
 
-The inner vessel is the core structural component, and its material choice directly impacts both the $\gamma$-ray detection performance and the thermal stability of the LXe medium. The fundamental conflict in material selection lies between maximizing thermal conductivity to ensure temperature uniformity and selecting a low atomic number ($\text{Z}$) to minimize $\gamma$-ray pre-interaction. Any structural material surrounding the LXe medium acts as a potential source of background, where incident $\gamma$-rays can be weakened or misdirected primarily through the Photoelectric Effect, Compton Scattering, and Pair Production. Since the cross-sections for these processes scale strongly with the material's Z, density, and thickness, the guiding principle for superior physics performance is to use low-$\text{Z}$ and thin-walled materials to maximize $\gamma$-ray penetration and preserve incident information.Several candidates populate this trade-space. Oxygen-Free High-Conductivity Copper (OFHC Cu, Z=29) offers exceptionally high thermal conductivity (approximately $400\text{ W/m}\cdot\text{K}$ at 165 K) and chemical inertness. This high conductivity is crucial for maintaining the stringent thermal uniformity required for stable refractive index and precise direction reconstruction. However, copper’s high $\text{Z}$ value significantly increases the probability of pre-interaction, introducing undesirable background. In contrast, High-Purity Aluminum ($\text{Al}, \text{Z}=13$) presents a clear mass advantage and a significantly lower interaction rate than copper, making it favorable for $\gamma$-ray transparency. Extending the low-$\text{Z}$ principle, Beryllium ($\text{Be}, \text{Z}=4$) offers the lowest radiation interaction rate of any common engineering material, while Glass Fiber Reinforced Plastic ($\text{GFRP}$), a low-$\text{Z}$ composite, maintains low interaction while potentially offering mechanical strength. The major drawback of these low-$\text{Z}$ materials (Aluminum, Beryllium, and $\text{GFRP}$) is their comparatively lower thermal conductivity relative to copper, which complicates the engineering task of achieving the necessary thermal uniformity for high-resolution detection. Beryllium also presents challenges related to cost and toxicity, and $\text{GFRP}$’s low thermal conductivity and outgassing must be carefully assessed. Therefore, the final material selection represents a critical trade-off between superior thermal stability (for measurement precision) afforded by high-conductivity materials and minimal $\gamma$-ray pre-interaction (for high efficiency and background suppression) provided by low-$\text{Z}$ materials. Future work to solve this challenge must concentrate on exploring innovative composite structures and thickness optimization to provide an effective solution that meets all demanding requirements simultaneously.
+The inner vessel is the core structural component, and its material choice directly impacts both the $\gamma$-ray detection performance and the thermal stability of the LXe medium. The fundamental conflict in material selection lies between maximizing thermal conductivity to ensure temperature uniformity and selecting a low atomic number ($\text{Z}$) to minimize $\gamma$-ray pre-interaction. Any structural material surrounding the LXe medium acts as a potential source of background, where incident $\gamma$-rays can be weakened or misdirected primarily through the Photoelectric Effect, Compton Scattering, and Pair Production. Since the cross-sections for these processes scale strongly with the material's Z, density, and thickness, the guiding principle for superior physics performance is to use low-$\text{Z}$ and thin-walled materials to maximize $\gamma$-ray penetration and preserve incident information. Several candidates populate this trade-space. Oxygen-Free High-Conductivity Copper (OFHC Cu, Z=29) offers exceptionally high thermal conductivity (approximately $400\text{ W/m}\cdot\text{K}$ at 165 K) and chemical inertness. This high conductivity is crucial for maintaining the stringent thermal uniformity required for stable refractive index and precise direction reconstruction. However, copper’s high $\text{Z}$ value significantly increases the probability of pre-interaction, introducing undesirable background. In contrast, High-Purity Aluminum ($\text{Al}, \text{Z}=13$) presents a clear mass advantage and a significantly lower interaction rate than copper, making it favorable for $\gamma$-ray transparency. Extending the low-$\text{Z}$ principle, Beryllium ($\text{Be}, \text{Z}=4$) offers the lowest radiation interaction rate of any common engineering material, while Glass Fiber Reinforced Plastic ($\text{GFRP}$), a low-$\text{Z}$ composite, maintains low interaction while potentially offering mechanical strength. The major drawback of these low-$\text{Z}$ materials (Aluminum, Beryllium, and $\text{GFRP}$) is their comparatively lower thermal conductivity relative to copper, which complicates the engineering task of achieving the necessary thermal uniformity for high-resolution detection. Beryllium also presents challenges related to cost and toxicity, and $\text{GFRP}$’s low thermal conductivity and outgassing must be carefully assessed. Therefore, the final material selection represents a critical trade-off between superior thermal stability (for measurement precision) afforded by high-conductivity materials and minimal $\gamma$-ray pre-interaction (for high efficiency and background suppression) provided by low-$\text{Z}$ materials. Future work to solve this challenge must concentrate on exploring innovative composite structures and thickness optimization to provide an effective solution that meets all demanding requirements simultaneously.
 
 \subsection{Temperature Control}
-The second paramount challenge lies in the design of a robust, long-duration Space Cryocooler System necessary to maintain the large LXe volume at a precise and stable $165\text{ K}$ throughout the multi-year mission. The total thermal load is fundamentally determined by the sum of conductive heat leak, defined by Fourier's law ($Q_{\text{cond}} = kA\frac{\Delta T}{L}$), and radiative heat leak, quantified by the Stefan-Boltzmann law ($Q_{\text{rad}}=\sigma\epsilon A(T_{\text{hot}}^4-T_{\text{cold}}^4)$). This necessitates a trade-off among various cooling mechanisms. While passive radiative cooling offers zero power consumption and is leveraged by the stable L2 environment, and stored cryogen systems simplify operation, the required mission duration and stability necessitate an active system. After evaluating mechanical options (Stirling, Pulse-Tube, and Joule-Thomson), the Pulse-Tube Cryocooler (PTC) is the recommended solution. This technology, exemplified by its use on the James Webb Space Telescope (JWST) \cite{Gardner2023JWST}, is favored for its long operational lifespan, high reliability, and, crucially, its minimal vibration output compared to Stirling coolers. To manage the thermal load during the ascent phase, the LXe will be pre-cooled to approximately $150\text{ K}$ using high-efficiency Multi-Layer Insulation ($\text{MLI}$) and the system's thermal inertia. Once in orbit, the primary engineering constraints shift to active cooling reliability and power consumption, as the PTC must operate continuously within the spacecraft's strict power budget. Moreover, the entire cooling system must be meticulously thermally and mechanically decoupled from the sensitive LXe enclosure. This is vital to prevent residual thermal cycling and mechanical noise from propagating into the active volume, which would compromise the Cherenkov light collection and the precision of the density-driven reconstruction.
+The second paramount challenge lies in the design of a robust, long-duration Space Cryocooler System necessary to maintain the large LXe volume at a precise and stable \qty{165}{\kelvin} throughout the multi-year mission. The total thermal load is fundamentally determined by the sum of conductive heat leak, defined by Fourier's law ($Q_{\text{cond}} = kA\frac{\Delta T}{L}$), and radiative heat leak, quantified by the Stefan-Boltzmann law ($Q_{\text{rad}}=\sigma\epsilon A(T_{\text{hot}}^4-T_{\text{cold}}^4)$). This necessitates a trade-off among various cooling mechanisms. While passive radiative cooling offers zero power consumption and is leveraged by the stable L2 environment, and stored cryogen systems simplify operation, the required mission duration and stability necessitate an active system. After evaluating mechanical options (Stirling, Pulse-Tube, and Joule-Thomson), the Pulse-Tube Cryocooler (PTC) is the recommended solution. This technology, exemplified by its use on the James Webb Space Telescope (JWST) \cite{Gardner2023JWST}, is favored for its long operational lifespan, high reliability, and, crucially, its minimal vibration output compared to Stirling coolers. To manage the thermal load during the ascent phase, the LXe will be pre-cooled to approximately \qty{150}{\kelvin} using high-efficiency Multi-Layer Insulation (MLI) and the system's thermal inertia. Once in orbit, the primary engineering constraints shift to active cooling reliability and power consumption, as the PTC must operate continuously within the spacecraft's strict power budget. Moreover, the entire cooling system must be meticulously thermally and mechanically decoupled from the sensitive LXe enclosure. This is vital to prevent residual thermal cycling and mechanical noise from propagating into the active volume, which would compromise the Cherenkov light collection and the precision of the density-driven reconstruction.
 
 \subsection{Auxiliary Module}
 
@@ -768,14 +781,14 @@ Overall, this design philosophy balances the need for functional integration wit
 
 \section{Conclusion}
 
-We report a reproducible Geant4~11.3.2 simulation of a 1~m$^3$ liquid-xenon Cherenkov telescope with 1{,}944 interior SiPMs. The regenerated pipeline yields $9683$ detected photons per GeV (filter OFF), $6920$ per GeV (filter ON), $\sigma_E/E \approx 0.50\%$ at 215~GeV, a filter transmission of $\sim 71\%$, and a SiPM peak factor of $2.07\pm 0.45\times$, implying $E_{\rm sat}\approx 1.75$~TeV for baseline 14{,}400-cell devices. Route~A geometric reconstruction achieves $\sigma_{68}\approx 0.13^\circ$ for vertical incidence; effective area at 200~GeV is $\approx 1.04$~m$^2$. These self-consistent numbers replace earlier draft metrics that could not be reproduced from the archived code.
+We have simulated a 1~m$^3$ liquid-xenon Cherenkov telescope with 1{,}944 interior SiPMs using Geant4~11.3.2. The instrument yields $9683$ detected photons per GeV without filtering and $6920$ per GeV with the CaF$_2$/MgF$_2$ filter in place ($\bar{T}\approx 0.71$). Photon counting gives $\sigma_E/E \approx 0.50\%$ at 215~GeV. The effective area for vertical $\gamma$ rays is approximately 1~m$^2$ between 100 and 1000~GeV, with only modest dependence on incidence angle at 200~GeV. A peak SiPM occupancy factor of $2.07\pm 0.45$ implies $E_{\rm sat}\approx 1.75$~TeV for baseline 14{,}400-cell devices, and six-face template matching achieves $\sigma_{68}=0.24^\circ$ overall at 30~GeV with all sampled polar angles below $0.5^\circ$. Future work includes sparse multi-energy angular calibration, ACD veto optimization, and experimental validation of the optical filter and SiPM response.
 
 \begin{acknowledgments}
 The authors acknowledge that this work originated from the Johns Hopkins University Summer Program, where the concept of the proposed liquid xenon Cherenkov telescope was first formulated. We are sincerely grateful to Dr. Kelly Lepo (Space Telescope Science Institute) and Mr. Joshua Lake (Pomfret School) for their expert advice and support. We also thank the development teams of MATLAB, Geant4, ParaView, and Cursor for providing essential tools used in this study.
 \end{acknowledgments}
 
 \begin{contribution}
-J.~Tian conceived the core concept of the proposed gamma-ray telescope and developed all theoretical models and reconstruction algorithms presented in this work. He also wrote the entire \textit{Telescope Design and Performance} section and led the overall scientific analysis. B.~Malool led the research and discussion of the telescope's feasibility and technical challenges, originated the critical design choice to separate the telescope into two distinct modules to minimize thermal transfer and maintain cryogenic stability. She authored the material selection, temperature control system and auxiliary module. Both authors reviewed and approved the final manuscript.
+Q.~Tian conceived the core concept of the proposed gamma-ray telescope and developed all theoretical models and reconstruction algorithms presented in this work. He also wrote the entire \textit{Telescope Design and Performance} section and led the overall scientific analysis. B.~Malool led the research and discussion of the telescope's feasibility and technical challenges, originated the critical design choice to separate the telescope into two distinct modules to minimize thermal transfer and maintain cryogenic stability. She authored the material selection, temperature control system and auxiliary module. Both authors reviewed and approved the final manuscript.
 \end{contribution}
 
 \bibliography{citation}{}

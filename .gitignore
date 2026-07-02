@@ -1,6 +1,13 @@
 deps/geant4-v11.3.2/
 deps/geant4-build/
 deps/geant4-install/
+deps/tectonic/
+paper/Paper.aux
+paper/Paper.bbl
+paper/Paper.blg
+paper/Paper.log
+paper/Paper.out
+paper/Paper.pdf
 build/
 build-hadronic/
 .venv/
